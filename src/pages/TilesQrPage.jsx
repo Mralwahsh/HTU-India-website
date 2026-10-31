@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import QrCode from '../components/football/QrCode.jsx'
 import Rangoli from '../components/tiles/Rangoli.jsx'
-import { getConnectionInfo } from '../game/net/socket.js'
+import { pageUrl, SCAN_HINT } from '../config/site.js'
 
 /**
  * /tiles-qr: the laptop only shows where to play Raga Tiles. The game itself runs on each
@@ -10,11 +10,9 @@ import { getConnectionInfo } from '../game/net/socket.js'
  */
 export default function TilesQrPage() {
   const navigate = useNavigate()
-  const [info, setInfo] = useState(undefined) // undefined = loading, null = server not running
   const [qrSize, setQrSize] = useState(() => qrFor(window))
 
   useEffect(() => {
-    getConnectionInfo().then(setInfo)
     const onResize = () => setQrSize(qrFor(window))
     const onKey = (e) => e.key === 'Escape' && navigate('/')
     window.addEventListener('resize', onResize)
@@ -25,7 +23,7 @@ export default function TilesQrPage() {
     }
   }, [navigate])
 
-  const url = info ? `http://${info.ip}:${window.location.port || 80}/tiles` : null
+  const url = pageUrl('/tiles')
 
   return (
     <div className="fixed inset-0 grid place-items-center overflow-hidden bg-[#2a1240] text-white" dir="rtl">
@@ -37,16 +35,11 @@ export default function TilesQrPage() {
           امسح الرمز والعب <bdi dir="ltr">Raga Tiles</bdi> 🎹
         </h1>
         <div className="mt-[3vh] rounded-[2.2rem] bg-[#fff4e0] p-[2.2vh] shadow-[0_24px_60px_-10px_rgba(0,0,0,0.6)] ring-8 ring-[#ffb000]">
-          {url ? (
-            <QrCode text={url} size={qrSize} dark="#2a1240" light="#fff4e0" />
-          ) : (
-            <div className="grid place-items-center p-8 text-center text-[#2a1240]" style={{ width: qrSize, height: qrSize }}>
-              <p className="text-3xl font-bold">{info === null ? 'الخادم غير متصل: شغّل npm start' : '…'}</p>
-            </div>
-          )}
+          <QrCode text={url} size={qrSize} dark="#2a1240" light="#fff4e0" />
         </div>
-        <p className="mt-[2.4vh] font-mono text-[min(1.6vw,2.6vh)] text-white/75" dir="ltr">
-          {url ?? ' '}
+        <p className="mt-[2.4vh] text-[min(2.2vw,3.6vh)] font-bold text-[#fff4e0]">📱 {SCAN_HINT}</p>
+        <p className="mt-[0.6vh] font-mono text-[min(1.6vw,2.6vh)] text-white/75" dir="ltr">
+          {url}
         </p>
       </main>
     </div>

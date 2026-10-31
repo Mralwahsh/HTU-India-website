@@ -255,7 +255,7 @@ export default function App() {
           {loadError ? (
             <div>
               <p className="text-2xl font-bold">تعذّر تحميل الألغاز</p>
-              <p className="mt-2 text-white/70">تأكد أنك متصل بشبكة الواي فاي الخاصة بالجناح.</p>
+              <p className="mt-2 text-white/70">تأكد أن هاتفك متصل بالإنترنت (بيانات الهاتف أو أي واي فاي).</p>
               <button className="btn-primary mt-6" onClick={() => location.reload()}>
                 حاول مرة أخرى
               </button>

@@ -7,24 +7,24 @@ const page = (p) => fileURLToPath(new URL(p, import.meta.url))
 
 // Phone-sized pages are their own small HTML entries that share no code with the site, so phones never
 // download the maps, Phaser, fonts etc.: /tiles (Raga Tiles) and /chess/puzzles (Puzzle Challenge).
-// In development their clean URLs are rewritten to the HTML files; server/index.js does the same in the booth.
+// Locally their clean URLs are rewritten to the HTML files here; on Vercel, vercel.json does the same.
 const PAGES = [
   [/^\/tiles\/?(?=\?|$)/, '/tiles.html'],
   [/^\/chess\/puzzles\/?(?=\?|$)/, '/chess-puzzles.html'],
 ]
 function separatePages() {
+  const rewrite = (req, _res, next) => {
+    for (const [re, file] of PAGES) if (re.test(req.url)) req.url = req.url.replace(re, file)
+    next()
+  }
   return {
     name: 'separate-pages',
-    configureServer(server) {
-      server.middlewares.use((req, _res, next) => {
-        for (const [re, file] of PAGES) if (re.test(req.url)) req.url = req.url.replace(re, file)
-        next()
-      })
-    },
+    configureServer: (server) => void server.middlewares.use(rewrite),
+    configurePreviewServer: (server) => void server.middlewares.use(rewrite),
   }
 }
 
-// The site is served from the root of the booth server (server/index.js, port 3000).
+// Static site: hosted on Vercel (https://htuindia.lol); phones and the laptop talk through Supabase Realtime.
 export default defineConfig({
   base: '/',
   plugins: [react(), tailwindcss(), separatePages()],
@@ -33,16 +33,12 @@ export default defineConfig({
   optimizeDeps: { exclude: ['harfbuzzjs'] },
   build: {
     target: 'es2022',
-    chunkSizeWarningLimit: 2000, // the site runs locally, size isn't critical (the phone pages are kept small on purpose)
+    chunkSizeWarningLimit: 2000, // the laptop pages are big (maps, Phaser); the phone pages are kept small on purpose
     rollupOptions: { input: { main: page('./index.html'), tiles: page('./tiles.html'), chessPuzzles: page('./chess-puzzles.html') } },
   },
   server: {
     port: 5173,
-    host: true, // reachable from phones on the hotspot during development
-    proxy: {
-      '/socket.io': { target: 'http://localhost:3000', ws: true },
-      '/api': 'http://localhost:3000',
-    },
+    host: true, // reachable from phones on the same Wi-Fi during development
   },
   preview: { port: 4173 },
 })

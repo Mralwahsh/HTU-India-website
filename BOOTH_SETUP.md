@@ -1,151 +1,113 @@
-# Booth setup: India Fighters (phone-controlled game)
+# Booth setup: India Speaks at HTU International Week
 
-The laptop runs the whole website **and** a small server. Visitors' phones join the laptop's own Wi-Fi hotspot and open the controller page. No internet is needed.
+The site runs on the web at **https://htuindia.lol** (Vercel). The laptop opens it like any website, and visitors'
+phones scan QR codes and use **their own mobile data or any Wi-Fi**. The phone controllers talk to the laptop through
+Supabase Realtime. How it is deployed: [DEPLOY.md](DEPLOY.md).
 
 ```
- phone ──Wi-Fi──► laptop hotspot (192.168.137.1) ──► Node server :3000 ──► /fight on the laptop screen
-```
-
----
-
-## 1. Once, before the event
-
-### Install
-```bash
-npm install
-```
-Do this while you still have internet. After that, nothing is downloaded at runtime.
-
-### Set the Wi-Fi name and password
-Edit [`src/config/booth.json`](src/config/booth.json) so it matches the hotspot you'll create in step 2. It's used for the small Wi-Fi QR code on the lobby screen:
-
-```json
-{ "wifi": { "ssid": "India-Booth", "password": "namaste2026", "security": "WPA" } }
-```
-
-Rebuild after changing it (`npm start` rebuilds automatically).
-
----
-
-## 2. Turn on the Windows Mobile Hotspot
-
-1. **Settings → Network & internet → Mobile hotspot**.
-2. Click **Edit** (or *Properties*) and set:
-   - **Network name**: the same `ssid` as in `booth.json`
-   - **Network password**: the same `password` (8+ characters)
-   - **Band**: *2.4 GHz* works with every phone; *Any available* is also fine.
-3. **Share my internet connection from**: pick whatever Windows offers.
-   - If the laptop is **not** connected to anything else, phones get no internet. That's fine: the game only talks to the laptop.
-   - If the laptop **is** on the university Wi-Fi, phones may get internet through it. That's harmless, and phones stay connected more happily.
-4. Turn **Mobile hotspot → On**.
-5. Open **Power saving** (on the same page) and turn **OFF** "When no devices are connected, automatically turn off mobile hotspot". Otherwise it switches itself off after a few minutes.
-
-> ⚠️ Some Windows versions refuse to start the hotspot when the laptop has **no** network connection at all. If that happens, connect the laptop to any Wi-Fi (or a phone's hotspot) first, then turn the Mobile hotspot on.
-
-The laptop's address on its own hotspot is almost always **`192.168.137.1`**. The server finds it automatically and puts it in the QR code.
-
----
-
-## 3. Allow port 3000 through the firewall
-
-The first time the server starts, Windows may show **"Windows Defender Firewall has blocked some features of Node.js"**. Tick **both Private and Public networks** and click **Allow**. The hotspot network is often treated as *Public*.
-
-If you missed the prompt, or phones still can't connect, add the rule yourself in **PowerShell as Administrator**:
-
-```powershell
-New-NetFirewallRule -DisplayName "India Speaks booth (TCP 3000)" -Direction Inbound -Protocol TCP -LocalPort 3000 -Action Allow -Profile Any
-```
-
-(Only for development with phones: also allow `5173`, the Vite dev server.)
-
-To remove it after the event:
-
-```powershell
-Remove-NetFirewallRule -DisplayName "India Speaks booth (TCP 3000)"
+ phone (4G/5G or any Wi-Fi) ──► htuindia.lol/controller?room=K7QM2X ──► Supabase Realtime ──► laptop: htuindia.lol/football
 ```
 
 ---
 
-## 4. Start the booth
+## 0. Morning of the event (checklist)
 
-```bash
-npm start
-```
+1. **Laptop internet**: connect the laptop to the venue Wi-Fi (or a phone hotspot / USB tethering as a backup) and open any website to be sure.
+2. **Supabase is awake**: open the [Supabase dashboard](https://supabase.com/dashboard). If the project says *Paused*, press **Restore** and wait until it is green (free projects pause after about a week without use).
+3. **Open the site**: **https://htuindia.lol** in Chrome or Edge, fullscreen (**F11** or the ⛶ button), and click once on the page (browsers only play sound after a click).
+4. **Test one QR per feature with a phone on mobile data** (Wi-Fi off):
+   - Football `/football`: scan → the phone shows *اللاعب 1* → press **ركل** → the match starts. Press **Shift+D** on the laptop: the phone's round trip (`p1 … ms`) should be under ~250 ms.
+   - Raga Tiles `/tiles-qr`: scan → the song list loads.
+   - Chess `/chess`: scan the puzzle QR → the first puzzle appears.
+   - Tours `/tour`: enter a place with the keyboard (W).
+5. **If the internet at the booth fails completely**: use the offline version (laptop server + Windows hotspot, no internet
+   needed). Prepare it **the day before, while you have internet**, in its own folder next to this one, so its packages
+   are already on the laptop:
+   ```bash
+   git worktree add ../india-speaks-offline local-hotspot-version
+   cd ../india-speaks-offline
+   npm install
+   ```
+   On the day, if needed: `cd ../india-speaks-offline` and `npm start`, then follow **that folder's** `BOOTH_SETUP.md`
+   (hotspot, firewall, QR codes). This folder (the web version) stays untouched.
 
-This builds the site and starts the server. The terminal prints:
+---
 
-```
-  🇮🇳 India Speaks server (booth / production) on port 3000
-     Laptop:  http://localhost:3000/fight
-     Phones:  http://192.168.137.1:3000/controller
-```
+## 1. Big Head Football (`/football`)
 
-1. Open **http://localhost:3000/fight** in Chrome or Edge on the laptop.
-2. Click the **⛶** button (fullscreen). That click also unlocks the game sounds; browsers only play sound after a click on the page.
-3. Check the lobby: the big QR code must show **`http://192.168.137.1:3000/controller`**.
-   - If it shows another address, restart with `HOST_IP=192.168.137.1 npm start` (PowerShell: `$env:HOST_IP="192.168.137.1"; npm start`).
-4. Test with your own phone once (scan Wi-Fi QR → scan controller QR → press a button).
+1. Open **https://htuindia.lol/football** on the laptop.
+2. The lobby shows a QR code and a **room code** (e.g. `K7Q M2X`). Visitors scan the QR with the phone camera; the
+   controller opens at `htuindia.lol/controller?room=K7QM2X`. Without a camera they can open `htuindia.lol/controller`
+   and type the room code.
+3. The first phone is **Player 1**, the second **Player 2**; without a second phone, P2 is played on the keyboard.
+4. Players pick a character with ◀ ▶ and press **ركل** (kick) to start.
 
-Already built and just want to start again quickly? Use `npm run serve`.
+After every game the laptop shows a **new room code** (when it goes back to the lobby). Phones on the old code are told
+"انتهت هذه الجولة" and scan again; a rematch straight from the result screen (press **ركل**) keeps the same code.
 
 ### Keys on the laptop
 
 | Key | Action |
 | --- | --- |
-| **Esc** / **من جديد** button | End the match, back to the lobby |
-| **A D W S** + **J K L I** | Play P1 with the keyboard (move + punch / kick / block / special), for testing without a phone |
-| **P** | Show / hide ping (debug) |
+| **Esc** / **من جديد** button | End the match and go back to the lobby (with a new room code) |
+| **A D W S** | Play P1 with the keyboard (move, jump, kick); in the lobby A/D change P1's character |
+| **← → ↑ ↓** | Play P2 with the keyboard; in the lobby ←/→ change P2's character |
+| **P** | Show / hide each phone's ping on the lobby |
+| **Shift+D** | Developer overlay: Realtime messages per second and round trips (phones: tap the ping three times) |
 | **M** | Sound on / off |
 
 ### What visitors do (shown on the lobby screen)
 
-1. Scan the small QR code → join the booth Wi-Fi
-2. Turn off mobile data
-3. Scan the big QR code → the controller opens in the browser
-4. Turn the phone sideways and press any button to start
+1. Scan the QR code with the phone camera
+2. Turn the phone sideways
+3. Pick a player with the arrows
+4. Press «ركل» to start the match
 
 ---
 
-## 5. Troubleshooting
+## 2. Troubleshooting
 
 | Problem | Fix |
 | --- | --- |
-| **Phone says "No internet" / "Internet may not be available"** | That's expected. Tap **Stay connected / Keep Wi-Fi connection**. The game doesn't need internet. |
-| **iPhone keeps loading or can't open the page** | Turn off **Mobile Data** (Settings → Mobile Data), or turn off **Wi-Fi Assist** at the bottom of the Mobile Data screen. Otherwise iOS sends traffic over 4G/5G instead of the booth Wi-Fi. |
-| **Android switches back to 4G** | Turn off mobile data, or turn off *Switch to mobile data / Adaptive Wi-Fi* in Wi-Fi settings. |
-| **Phone can't reach the page at all** | ① The phone is on the booth Wi-Fi? ② The address in the QR is `192.168.137.1`? ③ The firewall rule from step 3 exists? ④ Try `http://192.168.137.1:3000/controller` by typing it into the phone's browser. ⑤ Restart the server. |
-| **QR code shows `192.168.56.x` or another strange address** | That's a virtual network adapter (VirtualBox, VMware, WSL…). Start with `HOST_IP=192.168.137.1` (see step 4). |
-| **"الخادم غير متصل" (server not connected) on the lobby** | The Node server isn't running. Run `npm start` again. |
-| **"اللعبة ممتلئة" (game full) on a phone** | Player 1 is already taken by another phone. Wait for the match to end, or press **Esc** on the laptop. |
-| **A player's phone locked mid-match** | The game pauses automatically. Unlock the phone (the page reconnects into the same slot by itself) or scan the QR again. A 3-2-1 countdown resumes the fight. |
+| **Lobby says "جارٍ الاتصال…" / "انقطع الاتصال بالإنترنت" over the QR** | The laptop can't reach Supabase: check the laptop's internet; check the Supabase project isn't paused (step 0.2). |
+| **Lobby shows "وضع الاختبار المحلي"** | The site was built without the Supabase keys. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel and redeploy ([DEPLOY.md](DEPLOY.md) §3). |
+| **Phone shows "لا تجد الشاشة هذه الغرفة" or "انتهت هذه الجولة"** | The code is old (the laptop moved on to a new game). Scan the QR on the laptop again. |
+| **"اللعبة ممتلئة" (game full) on a phone** | Two phones are already playing. The phone joins by itself when the match ends. |
+| **A player's phone locked or lost signal mid-match** | The match pauses after a few seconds. Unlock the phone / reopen the page (it gets its slot back by itself) or scan the QR again; a 3-2-1 countdown resumes the match. |
+| **The laptop lost the internet mid-match** | The match pauses ("انقطع اتصال الحاسوب بالإنترنت") and resumes with a countdown when the connection is back. |
+| **Controls feel late** | Shift+D on the laptop: if the phone's round trip is above ~300 ms, try the phone on Wi-Fi instead of mobile data (or the other way round). |
 | **No sound** | Click anywhere on the laptop page once (browser rule), and check **M** / the speaker button. |
-| **Hotspot turned itself off** | Turn off *Power saving* in the Mobile hotspot settings (step 2.5). |
 
 ---
 
-## 6. Development (with phones)
+## 3. Development
 
 ```bash
 npm run dev
 ```
 
-This starts the Node server (port 3000) and Vite (port 5173, reachable from the network) together. Open `http://localhost:5173/fight`. The QR code then points to port 5173, and Vite forwards the game traffic to the Node server. Remember the firewall rule for 5173.
+Vite on `http://localhost:5173`. Without Supabase keys in `.env.local` the realtime pages run in *local test mode*
+(open the controller link in a second tab of the same browser). Details in [DEPLOY.md](DEPLOY.md) §2.
 
-Debug helpers: add `?timer=1` to the `/fight` URL to keep the game running in a background tab. In development builds the game scene is available as `window.__fightScene` in the console.
+Debug helpers in development builds: `window.__footballHost` (room, slots, held buttons) and `window.__football`
+(the Phaser scene) in the console; `?debug` on `/football` or `/controller` shows the Realtime overlay.
 
 ---
 
-## 7. Virtual tours (`/tour`)
+## 4. Virtual tours (`/tour`)
 
-Visitors walk through 360° photos of places in India with a phone that works like a gamepad. It uses the same hotspot, firewall rule and server as the football game, but its **own controller page**: the football `/controller` is not affected.
+Visitors walk through 360° photos of places in India with a phone that works like a gamepad. It has its **own controller page** (`/tour-controller`): the football `/controller` is not affected.
+
+> ⚠️ **Being migrated:** the tour's phone controller still talks to the old local server, so on the web version it
+> can't connect yet; it moves to Supabase Realtime in the next step. Until then drive the tour with the keyboard (below).
 
 ```
- Laptop:  http://localhost:3000/tour
- Phones:  http://192.168.137.1:3000/tour-controller   (the QR code on the tour screen)
+ Laptop:  https://htuindia.lol/tour
+ Phones:  https://htuindia.lol/tour-controller   (the QR code on the tour screen)
 ```
 
-1. Open **http://localhost:3000/tour** (or click **جولات** in the top bar).
-2. The visitor joins the booth Wi-Fi (small QR), then scans the big QR and turns the phone sideways.
+1. Open **https://htuindia.lol/tour** (or click **جولات** in the top bar).
+2. The visitor scans the QR with the phone camera and turns the phone sideways.
 3. On the map, the **left stick** picks a place (← →) and pushing it **up** enters the tour.
 
 ### The phone controller
@@ -180,15 +142,15 @@ All of them are full 360° photos. The Sanchi, Ajanta, Ellora and Udayagiri ones
 
 Google Street View can be used instead when the laptop has internet:
 
-1. Create a Google Maps API key with **Maps JavaScript API** enabled, and restrict it to your domain / `localhost`.
+1. Create a Google Maps API key with **Maps JavaScript API** enabled, and restrict it by HTTP referrer to `https://htuindia.lol/*`, `http://localhost:5173/*` and your Vercel preview addresses.
 2. Put it in a file named **`.env.local`** in the project folder (this file is not committed):
    ```
    VITE_GOOGLE_MAPS_API_KEY=your-key-here
    ```
 3. In [`src/tour/config.js`](src/tour/config.js) set `provider: 'auto'` (Street View when online, offline photos otherwise) or `'google'`.
-4. Rebuild with `npm start`. If Google fails to load, or rejects the key, the tour falls back to the offline photos by itself.
+4. On Vercel, add the same variable under Settings → Environment Variables and redeploy ([DEPLOY.md](DEPLOY.md) §3). If Google fails to load, or rejects the key, the tour falls back to the offline photos by itself.
 
-**Test page: `/streetview-test`** (e.g. http://localhost:5173/streetview-test, not in the top bar). Use it to check the key before the event:
+**Test page: `/streetview-test`** (e.g. https://htuindia.lol/streetview-test, not in the top bar). Use it to check the key before the event:
 
 - The chips at the top say whether the key is set, the laptop is online, the Google script loaded and **whether Google accepted the key**. Google finds panoramas even with a bad key and only refuses when it draws one, so "Key: accepted" appears only after a panorama is actually shown.
 - Pick a ready-made place (Taj Mahal, Meenakshi, Kailasa, the root bridges, the Golden Temple… and the current tour places in green) or type a latitude / longitude. Set the search radius, and tick "outdoor only" to skip visitors' photo spheres.
@@ -217,20 +179,20 @@ Debug helper: add `?timer=1` to the `/tour` URL to keep the tour running in a ba
 
 ---
 
-## 8. Raga Tiles (`/tiles-qr` on the laptop, `/tiles` on phones)
+## 5. Raga Tiles (`/tiles-qr` on the laptop, `/tiles` on phones)
 
 A piano-tiles game that visitors play **on their own phones**, as many at once as you like. The laptop only shows a QR code; the game and its music run on each phone (sound comes from the phone's speaker, never the laptop).
 
 ```
- Laptop:  http://localhost:3000/tiles-qr       (only the big QR code; Esc goes back to the site)
- Phones:  http://192.168.137.1:3000/tiles      (what the QR code opens)
+ Laptop:  https://htuindia.lol/tiles-qr   (only the big QR code; Esc goes back to the site)
+ Phones:  https://htuindia.lol/tiles      (what the QR code opens)
 ```
 
-1. Open **http://localhost:3000/tiles-qr** on the laptop (fullscreen with F11).
-2. Visitors join the booth Wi-Fi first (the Wi-Fi QR is on the other pages, e.g. the tour or football screen), then scan this QR code.
+1. Open **https://htuindia.lol/tiles-qr** on the laptop (fullscreen with F11).
+2. Visitors scan the QR code with the phone camera (mobile data or any Wi-Fi).
 3. On the phone: wait for the short loading bar → **اضغط للبدء** (Tap to start; this also switches the sound on) → pick a song and Easy / Normal.
 
-The phone downloads everything once (about 110 KB: the game, one font and the songs, nothing else from the site). After that it needs no network at all: no server calls, no sockets, so a Wi-Fi drop mid-song changes nothing.
+The phone downloads everything once (about 110 KB: the game, one font and the songs, nothing else from the site). After that it needs no network at all: no server calls, no sockets, so losing the signal mid-song changes nothing.
 
 **Sound tip for iPhones:** Web audio is muted when the **silent switch** (side of the iPhone) is on. The game shows "لا يوجد صوت؟ أطفئ الوضع الصامت 🔔"; flip the switch and turn the volume up.
 
@@ -257,7 +219,7 @@ npm run song -- path/to/song.mid --title "Song name" --title-ar "اسم الأغ
 npm run song -- path/to/jana-gana-mana.mid --preset anthem
 ```
 
-The preset sets the id `jana-gana-mana`, the titles, the one-line intro and **respectful** mode, and overwrites the current file. Run `npm start` again to rebuild.
+The preset sets the id `jana-gana-mana`, the titles, the one-line intro and **respectful** mode, and overwrites the current file. Commit and push to publish it.
 
 The converter prints every track of the MIDI file and picks the melody (the highest non-drum track). Useful options:
 
@@ -285,7 +247,7 @@ A tile counts when you touch the tile itself or near it: half a tile above or be
 - [ ] Classic: tap the first tile to start; a wrong tap ends the round; "حاول مرة أخرى" restarts.
 - [ ] Hold tiles: holding keeps the note sounding; two fingers at once work.
 - [ ] Respectful: put the phone down without tapping: the melody plays to the end and "شكرًا لك" appears.
-- [ ] Turn Wi-Fi off after the song list appears: everything still works.
+- [ ] Turn mobile data and Wi-Fi off after the song list appears: everything still works.
 - [ ] Three or four phones playing at the same time.
 - [ ] No page zoom, scrolling or long-press menu while playing; turning the phone sideways shows "أمسك الهاتف بشكل عمودي".
 
@@ -293,11 +255,11 @@ Debug helper: `/tiles?timer=1` keeps the game running in a background tab (for t
 
 ---
 
-## 9. India & Chess (`/chess`) and the Puzzle Challenge (`/chess/puzzles`)
+## 6. India & Chess (`/chess`) and the Puzzle Challenge (`/chess/puzzles`)
 
 ```
- Laptop:  http://localhost:3000/chess            (top bar: شطرنج)
- Phones:  http://192.168.137.1:3000/chess/puzzles (the QR code at the bottom of /chess)
+ Laptop:  https://htuindia.lol/chess            (top bar: شطرنج)
+ Phones:  https://htuindia.lol/chess/puzzles    (the QR code at the bottom of /chess)
 ```
 
 `/chess` is a short scrolling page: the countdown to the World Championship match, how the Chaturanga pieces became today's pieces (tap or hover a piece), the journey India → Persia → Arab world → Europe → the world, and a timeline. At the bottom: **ابدأ تحدّي الألغاز** (plays on the same device), a QR code to play on a phone, and **today's top solvers**, which refresh every 5 seconds.
@@ -306,14 +268,17 @@ The **Puzzle Challenge** is a 15-level ladder: mate in 1 (levels 1–6), mate in
 
 ### Leaderboard
 
+> ⚠️ **Being migrated:** the leaderboard still expects the old local server; it moves to a Supabase table in a next
+> step. Until then the web version shows "الخادم غير متصل" there, and finished runs wait on the phones.
+
 - Kept on the laptop in `data/chess-leaderboard.json`: today's results only; it starts empty every day by itself.
 - Ranking: most levels completed, then the fastest total time. Each name appears once (its best run).
 - **Clear it:** on the laptop, on the `/chess` page, press **Shift + R three times** quickly and confirm. This only works on the laptop itself; phones can't clear it.
-- If a phone loses Wi-Fi at the end of a run, its score waits on the phone and is sent automatically later.
+- If a phone loses its connection at the end of a run, its score waits on the phone and is sent automatically later.
 
 ### Puzzles
 
-Every puzzle is checked by `npm run puzzles`, and again at the start of every `npm run build` / `npm start`. The build stops if a puzzle is wrong. It checks, by trying every defence:
+Every puzzle is checked by `npm run puzzles`, and again at the start of every `npm run build` (also on Vercel). The build stops if a puzzle is wrong. It checks, by trying every defence:
 - the position is legal;
 - the mate is forced in exactly the stated number of moves;
 - any other move that also mates in time is accepted as correct;
@@ -342,6 +307,6 @@ The match date, the history texts and the timeline are in [`src/config/chess.js`
 - [ ] A mate in 2: after your first move, the opponent answers by itself.
 - [ ] A wrong move shakes the board and removes a ♟️; at zero the answer plays, then the end screen.
 - [ ] The score appears on `/chess` within a few seconds.
-- [ ] Turn the phone's Wi-Fi off before finishing a run: the end screen says the score will be sent later; turn Wi-Fi on: it arrives.
+- [ ] Turn the phone's data off before finishing a run: the end screen says the score will be sent later; turn it back on: it arrives.
 - [ ] `/chess` scrolls on a phone and the top bar menu slides sideways.
 - [ ] Shift+R ×3 on the laptop clears the list.

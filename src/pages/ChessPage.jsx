@@ -6,7 +6,7 @@ import Leaderboard from '../components/chess/Leaderboard.jsx'
 import QrCode from '../components/football/QrCode.jsx'
 import { PIECES as MODERN, PIECE_CREDIT } from '../chess-shared/pieces.js'
 import { CHECKMATE, JOURNEY, MATCH, PIECES, TIMELINE } from '../config/chess.js'
-import { getConnectionInfo } from '../game/net/socket.js'
+import { pageUrl, SCAN_HINT } from '../config/site.js'
 
 /** /chess: "India & Chess". Works on the laptop (big, from a distance) and on phones; the page scrolls. */
 export default function ChessPage() {
@@ -263,11 +263,7 @@ function Timeline() {
 
 // ---------------------------------------------------------------- 6. puzzle challenge (bottom)
 function PuzzleCta() {
-  const [info, setInfo] = useState(undefined)
-  useEffect(() => {
-    getConnectionInfo().then(setInfo)
-  }, [])
-  const url = info ? `http://${info.ip}:${window.location.port || 80}/chess/puzzles` : null
+  const url = pageUrl('/chess/puzzles')
   return (
     <section className="bg-navy px-[clamp(1rem,4vw,4rem)] py-[clamp(2.5rem,7vh,5rem)] text-white">
       <div className="mx-auto grid max-w-[1500px] gap-8 lg:grid-cols-[1.15fr_1fr] [&>*]:min-w-0">
@@ -284,12 +280,13 @@ function PuzzleCta() {
             </a>
             <div className="flex min-w-0 items-center gap-4">
               <div className="shrink-0 rounded-3xl bg-white p-3">
-                {url ? <QrCode text={url} size={180} /> : <div className="grid h-[180px] w-[180px] place-items-center text-center text-navy">{info === null ? 'الخادم غير متصل' : '…'}</div>}
+                <QrCode text={url} size={180} />
               </div>
               <div>
-                <p className="font-display text-[clamp(1.3rem,2vw,1.8rem)]">امسح لتلعب على هاتفك</p>
+                <p className="font-display text-[clamp(1.3rem,2vw,1.8rem)]">العب على هاتفك</p>
+                <p className="mt-1 text-[clamp(1rem,1.3vw,1.2rem)] text-white/85">📱 {SCAN_HINT}</p>
                 <p className="mt-1 font-mono text-sm break-all text-white/60" dir="ltr">
-                  {url ?? ''}
+                  {url}
                 </p>
               </div>
             </div>

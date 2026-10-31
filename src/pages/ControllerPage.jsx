@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CHARACTER_IDS, DEFAULT_PICKS, EV } from '../../shared/protocol.js'
-import { connectSocket, measurePing } from '../game/net/socket.js'
+import { CHARACTER_IDS, DEFAULT_PICKS } from '../../shared/protocol.js'
+import { FootballClient } from '../game/net/FootballClient.js'
 import { CHARACTERS, SLOT_COLOR, SLOT_LABEL_AR } from '../game/football/characters/index.js'
 import { headDataUrl } from '../game/football/characters/art.js'
+import RealtimeDebug from '../components/RealtimeDebug.jsx'
+import { normalizeRoomCode, prettyRoomCode, roomCodeFromUrl } from '../realtime/roomCode.js'
 
-// A short-lived id so a phone that drops (screen lock, Wi-Fi hiccup, reload) gets its slot back.
-// Not crypto.randomUUID(): that only exists on HTTPS pages, and the booth runs on plain HTTP.
+// A saved id so a phone that drops (screen lock, signal hiccup, reload) gets its slot back.
+// Not crypto.randomUUID(): that only exists on HTTPS pages, and local testing over the LAN is plain HTTP.
 function clientId() {
   const KEY = 'india-football:client-id'
   try {
@@ -28,84 +30,69 @@ const PHASE_TEXT = {
   result: 'اضغط «ركل» للعب مجددًا',
 }
 
-/** Phone controller: /controller. Landscape, multitouch, no zoom/scroll/selection. */
+/**
+ * Phone controller: /controller?room=K7QM2X (the QR on the laptop). Landscape, multitouch, no
+ * zoom/scroll/selection. Without a room code in the address the visitor can type the code shown on the laptop.
+ */
 export default function ControllerPage() {
-  const socketRef = useRef(null)
-  const [status, setStatus] = useState('connecting') // connecting | connected | reconnecting | full | error
-  const [slot, setSlot] = useState(null)
-  const [phase, setPhase] = useState('lobby')
-  const [room, setRoom] = useState(null)
-  const [score, setScore] = useState({ p1: 0, p2: 0 })
-  const [ping, setPing] = useState(null)
+  const [code, setCode] = useState(roomCodeFromUrl)
+  // a new code (typed, or the laptop moved on) remounts the controller with fresh state
+  return code ? <Controller key={code} code={code} onNewCode={setCode} /> : <CodeEntry onCode={setCode} />
+}
+
+function Controller({ code, onNewCode }) {
+  const clientRef = useRef(null)
+  const [net, setNet] = useState({ status: 'connecting', slot: null, room: null, rtt: null })
+  const { status, slot, room, rtt: ping } = net
+  const phase = room?.phase ?? 'lobby'
+  const score = room?.score ?? { p1: 0, p2: 0 }
   const [flash, setFlash] = useState(0)
   const [held, setHeld] = useState({})
   const heldRef = useRef({})
-  const phaseRef = useRef(phase)
-  useEffect(() => {
-    phaseRef.current = phase
-  }, [phase])
+  const debugTap = useRef(null)
 
-  // ---------------------------------------------------------- button state → server
+  // ---------------------------------------------------------- button state → laptop
   const setButton = useCallback((button, pressed) => {
     if (!!heldRef.current[button] === pressed) return
     heldRef.current = { ...heldRef.current, [button]: pressed }
     setHeld(heldRef.current)
-    socketRef.current?.emit(EV.INPUT, { button, pressed })
+    clientRef.current?.press(button, pressed)
   }, [])
 
   const releaseAll = useCallback(() => {
     Object.keys(heldRef.current).forEach((b) => heldRef.current[b] && setButton(b, false))
   }, [setButton])
 
-  // ---------------------------------------------------------- socket
+  // ---------------------------------------------------------- room (Supabase Realtime)
   useEffect(() => {
-    const id = clientId()
-    const socket = connectSocket()
-    socketRef.current = socket
-    const join = () =>
-      socket.emit(EV.CONTROLLER_JOIN, { clientId: id }, (res) => {
-        if (res?.ok) {
-          setSlot(res.slot)
-          setPhase(res.phase)
-          if (res.room) {
-            setRoom(res.room)
-            setScore(res.room.score)
-          }
-          setStatus('connected')
-        } else setStatus(res?.reason === 'full' ? 'full' : 'error')
-      })
-    socket.on('connect', join)
-    socket.on('disconnect', () => setStatus((s) => (s === 'full' ? s : 'reconnecting')))
-    socket.io.on('reconnect_attempt', () => setStatus((s) => (s === 'full' ? s : 'reconnecting')))
-    socket.on(EV.ROOM_UPDATE, (r) => {
-      setRoom(r)
-      setScore(r.score)
+    const client = new FootballClient({
+      code,
+      clientId: clientId(),
+      onChange: setNet,
+      onBuzz: (pattern) => {
+        setFlash((n) => n + 1)
+        try {
+          navigator.vibrate?.(pattern)
+        } catch {
+          /* not supported (iPhone) */
+        }
+      },
     })
-    socket.on(EV.GAME_STATE, ({ phase: p, score: sc }) => {
-      setPhase(p)
-      if (sc) setScore(sc)
-    })
-    socket.on(EV.BUZZ, ({ pattern }) => {
-      setFlash((n) => n + 1)
-      try {
-        navigator.vibrate?.(pattern)
-      } catch {
-        /* not supported (iPhone) */
-      }
-    })
-    const pingTimer = setInterval(async () => {
-      if (!socket.connected) return
-      const ms = await measurePing(socket)
-      if (ms != null) {
-        setPing(Math.round(ms))
-        socket.emit(EV.CONTROLLER_PING, { ms })
-      }
-    }, 2000)
+    clientRef.current = client
     return () => {
-      clearInterval(pingTimer)
-      socket.disconnect()
+      client.destroy()
+      clientRef.current = null
     }
-  }, [])
+  }, [code])
+
+  // keep the address in sync, so a reload rejoins the same room
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('room') !== code) {
+      url.searchParams.set('room', code)
+      window.history.replaceState(null, '', url)
+    }
+  }, [code])
 
   // release everything if the app is backgrounded (otherwise a button could stay "stuck")
   useEffect(() => {
@@ -146,9 +133,9 @@ export default function ControllerPage() {
       let i = CHARACTER_IDS.indexOf(myPick)
       do i = (i + dir + CHARACTER_IDS.length) % CHARACTER_IDS.length
       while (CHARACTER_IDS[i] === otherPick)
-      socketRef.current?.emit(EV.CONTROLLER_PICK, { characterId: CHARACTER_IDS[i] })
-      // show it immediately; the server's room:update confirms (or snaps back)
-      setRoom((r) => (r && slot ? { ...r, slots: { ...r.slots, [slot]: { ...r.slots[slot], character: CHARACTER_IDS[i] } } } : r))
+      clientRef.current?.pick(CHARACTER_IDS[i])
+      // show it immediately; the laptop's next room state confirms it (or snaps back)
+      setNet((n) => (n.room && slot ? { ...n, room: { ...n.room, slots: { ...n.room.slots, [slot]: { ...n.room.slots[slot], character: CHARACTER_IDS[i] } } } } : n))
     },
     [canPick, myPick, otherPick, slot],
   )
@@ -190,8 +177,11 @@ export default function ControllerPage() {
           {score.p1} - {score.p2}
         </span>
         <div className="flex items-center gap-2 text-sm">
-          <span className={`h-3 w-3 rounded-full ${status === 'connected' ? 'bg-[#2ecc40]' : 'animate-pulse bg-[#ffb000]'}`} />
-          <span className="text-white/70">{status === 'connected' ? `${ping ?? '–'} ms` : 'إعادة الاتصال…'}</span>
+          {/* tap three times: developer overlay (messages per second, round trip) */}
+          <button type="button" onClick={() => debugTap.current?.()} className="flex items-center gap-2">
+            <span className={`h-3 w-3 rounded-full ${status === 'connected' ? 'bg-[#2ecc40]' : 'animate-pulse bg-[#ffb000]'}`} />
+            <span className="text-white/70">{status === 'connected' ? `${ping ?? '–'} ms` : 'إعادة الاتصال…'}</span>
+          </button>
           <FullscreenButton />
         </div>
       </header>
@@ -227,17 +217,15 @@ export default function ControllerPage() {
 
       {/* status screens */}
       {status !== 'connected' && status !== 'reconnecting' && (
-        <div className="absolute inset-0 grid place-items-center bg-[#0b0f3a]/95 p-6 text-center" dir="rtl">
-          <div>
-            <p className="text-3xl font-extrabold">
-              {status === 'connecting' && 'جارٍ الاتصال…'}
-              {status === 'full' && 'اللعبة ممتلئة الآن'}
-              {status === 'error' && 'تعذّر الاتصال'}
-            </p>
-            {status === 'full' && <p className="mt-2 text-lg text-white/70">انتظر انتهاء المباراة ثم امسح الرمز مجددًا</p>}
-          </div>
-        </div>
+        <StatusScreen
+          status={status}
+          code={code}
+          onRejoin={() => clientRef.current?.rejoin()}
+          onTypeCode={() => onNewCode(null)}
+        />
       )}
+
+      <RealtimeDebug toggleRef={debugTap} />
 
       {/* portrait → ask to rotate */}
       <div className="rotate-hint absolute inset-0 bg-[#0b0f3a] p-8 text-center" dir="rtl">
@@ -247,6 +235,82 @@ export default function ControllerPage() {
           <p className="mt-2 text-lg text-white/70">Turn your phone sideways</p>
         </div>
       </div>
+    </div>
+  )
+}
+
+const STATUS_TEXT = {
+  connecting: ['جارٍ الاتصال…', ''],
+  full: ['اللعبة ممتلئة الآن', 'ستدخل تلقائيًا عندما يصبح هناك مكان (بعد انتهاء المباراة).'],
+  'no-screen': ['لا تجد الشاشة هذه الغرفة', 'ربما تغيّر الرمز. امسح الرمز الظاهر على الشاشة الآن، أو اكتب رمز الغرفة.'],
+  closed: ['انتهت هذه الجولة', 'الشاشة تعرض رمزًا جديدًا. امسحه لتلعب مرة أخرى.'],
+  replaced: ['أخذ هاتف آخر مكانك', 'انقطع اتصالك فدخل لاعب آخر. يمكنك المحاولة مجددًا.'],
+}
+
+/** Full-screen messages (joining, full, old code, replaced). */
+function StatusScreen({ status, code, onRejoin, onTypeCode }) {
+  const [title, text] = STATUS_TEXT[status] ?? STATUS_TEXT.connecting
+  return (
+    // above the "turn your phone" hint, except while simply connecting
+    <div className={`absolute inset-0 grid place-items-center bg-[#0b0f3a]/95 p-6 text-center ${status === 'connecting' ? '' : 'z-10'}`} dir="rtl">
+      <div className="max-w-xl">
+        <p className="text-3xl font-extrabold">{title}</p>
+        {text && <p className="mt-2 text-lg text-white/75">{text}</p>}
+        <p className="mt-3 text-base text-white/50">
+          رمز الغرفة:{' '}
+          <bdi className="font-mono font-bold text-white/80" dir="ltr">
+            {prettyRoomCode(code)}
+          </bdi>
+        </p>
+        <div className="mt-5 flex flex-wrap justify-center gap-3">
+          {status === 'replaced' && (
+            <button type="button" onClick={onRejoin} className="rounded-full bg-[#ff9933] px-6 py-2 text-xl font-extrabold text-[#0b0f3a]">
+              حاول مجددًا
+            </button>
+          )}
+          {(status === 'no-screen' || status === 'closed') && (
+            <button type="button" onClick={onTypeCode} className="rounded-full bg-white/15 px-6 py-2 text-xl font-bold">
+              اكتب رمز الغرفة
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** No room code in the address: type the one shown on the laptop (or scan its QR again). */
+function CodeEntry({ onCode }) {
+  const [text, setText] = useState('')
+  const code = normalizeRoomCode(text)
+  const submit = (e) => {
+    e.preventDefault()
+    if (code) onCode(code)
+  }
+  return (
+    <div className="fixed inset-0 grid place-items-center overflow-auto bg-[#0b0f3a] p-6 text-center text-white" dir="rtl">
+      <form onSubmit={submit} className="w-full max-w-md">
+        <p className="text-6xl">⚽📱</p>
+        <h1 className="mt-3 text-3xl font-extrabold">يد التحكم: كرة الرؤوس الكبيرة</h1>
+        <p className="mt-2 text-lg text-white/75">امسح الرمز الظاهر على الشاشة بكاميرا هاتفك، أو اكتب رمز الغرفة (6 أحرف):</p>
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          dir="ltr"
+          inputMode="text"
+          autoCapitalize="characters"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          maxLength={9}
+          placeholder="K7Q M2X"
+          aria-label="رمز الغرفة"
+          className="mt-5 w-full rounded-2xl bg-white px-4 py-3 text-center font-mono text-4xl font-extrabold tracking-[0.25em] text-[#0b0f3a] uppercase select-text placeholder:text-[#0b0f3a]/25"
+        />
+        <button type="submit" disabled={!code} className="mt-4 w-full rounded-2xl bg-[#ff9933] py-3 text-2xl font-extrabold text-[#0b0f3a] disabled:opacity-40">
+          دخول
+        </button>
+      </form>
     </div>
   )
 }

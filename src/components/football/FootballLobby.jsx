@@ -1,14 +1,16 @@
 import { motion } from 'framer-motion'
-import QrCode, { wifiQrText } from './QrCode.jsx'
-import boothConfig from '../../config/booth.json'
+import QrCode from './QrCode.jsx'
 import { CHARACTERS, SLOT_COLOR, SLOT_LABEL_AR } from '../../game/football/characters/index.js'
 import { headDataUrl } from '../../game/football/characters/art.js'
 import { DEFAULT_PICKS } from '../../../shared/protocol.js'
+import { SCAN_HINT } from '../../config/site.js'
+import { REALTIME_KIND } from '../../realtime/channel.js'
+import { prettyRoomCode } from '../../realtime/roomCode.js'
 
-const STEPS = ['امسح الرمز الصغير للاتصال بالواي فاي', 'أوقف بيانات الهاتف (Mobile Data)', 'امسح الرمز الكبير لتحصل على يد التحكم', 'أدر هاتفك بالعرض واختر لاعبك']
+const STEPS = ['امسح الرمز بكاميرا هاتفك', 'أدر هاتفك بالعرض', 'اختر لاعبك بالسهمين', 'اضغط «ركل» لتبدأ المباراة']
 
-/** Lobby: QR codes, the two players with their characters, today's records, "press KICK". */
-export default function FootballLobby({ controllerUrl, room, serverOk, records, showPing, screenPing }) {
+/** Lobby: QR code + room code, the two players with their characters, today's records, "press KICK". */
+export default function FootballLobby({ controllerUrl, code, status, room, pings, records, showPing, screenPing }) {
   const anyone = ['p1', 'p2'].some((s) => room?.slots?.[s]?.type === 'human' && room.slots[s].connected)
 
   return (
@@ -21,7 +23,7 @@ export default function FootballLobby({ controllerUrl, room, serverOk, records, 
 
         <div className="mt-4 grid grid-cols-2 gap-4">
           {['p1', 'p2'].map((slot) => (
-            <PlayerCard key={slot} slot={slot} info={room?.slots?.[slot]} showPing={showPing} />
+            <PlayerCard key={slot} slot={slot} info={room?.slots?.[slot]} ping={pings?.[slot]} showPing={showPing} />
           ))}
         </div>
 
@@ -50,45 +52,41 @@ export default function FootballLobby({ controllerUrl, room, serverOk, records, 
       </section>
 
       <section className="flex min-h-0 flex-col items-center justify-center gap-4 rounded-[2.5rem] bg-paper p-6 shadow-sm ring-1 ring-ink/5">
-        {serverOk === false ? (
-          <div className="max-w-md text-center">
-            <p className="text-3xl font-bold text-accent">الخادم غير متصل</p>
-            <p className="mt-2 text-xl text-muted">
-              شغّل الخادم بالأمر <code dir="ltr">npm start</code> (أو <code dir="ltr">npm run dev</code>) ثم أعد تحميل الصفحة.
-            </p>
-          </div>
-        ) : (
-          <>
-            <p className="font-display text-3xl font-extrabold text-navy">امسح لتحصل على يد التحكم</p>
-            {controllerUrl ? <QrCode text={controllerUrl} size={290} /> : <div className="h-[290px] w-[290px] animate-pulse rounded-2xl bg-ink/5" />}
-            <p className="rounded-full bg-navy/5 px-4 py-1 font-mono text-xl font-bold text-navy" dir="ltr">
-              {controllerUrl ?? '…'}
-            </p>
-            <div className="mt-1 flex items-center gap-5 rounded-3xl bg-green-soft p-4">
-              <QrCode text={wifiQrText(boothConfig.wifi)} size={120} dark="#0d5c06" />
-              <div>
-                <p className="text-xl font-extrabold text-green">اتصل بالواي فاي أولًا</p>
-                <p className="mt-1 text-lg" dir="ltr">
-                  <b>{boothConfig.wifi.ssid}</b>
-                </p>
-                <p className="text-lg text-muted" dir="ltr">
-                  {boothConfig.wifi.password}
-                </p>
-              </div>
+        <p className="font-display text-3xl font-extrabold text-navy">امسح لتحصل على يد التحكم</p>
+        <div className="relative">
+          {controllerUrl ? <QrCode text={controllerUrl} size={290} /> : <div className="h-[290px] w-[290px] animate-pulse rounded-2xl bg-ink/5" />}
+          {status !== 'live' && (
+            <div className="absolute inset-0 grid place-items-center rounded-2xl bg-paper/85 text-center">
+              <p className="text-2xl font-bold text-navy">{status === 'reconnecting' ? 'انقطع الاتصال بالإنترنت… جارٍ إعادة الاتصال' : 'جارٍ الاتصال…'}</p>
             </div>
-            {showPing && (
-              <p className="font-mono text-sm text-muted" dir="ltr">
-                screen↔server {screenPing == null ? '–' : `${Math.round(screenPing)} ms`}
-              </p>
-            )}
-          </>
+          )}
+        </div>
+        <p className="text-xl font-bold text-ink/80">📱 {SCAN_HINT}</p>
+        <div className="flex items-center gap-3 rounded-3xl bg-navy px-6 py-2 text-white">
+          <span className="text-lg">رمز الغرفة</span>
+          <bdi className="font-mono text-4xl font-extrabold tracking-[0.2em] text-saffron" dir="ltr">
+            {prettyRoomCode(code)}
+          </bdi>
+        </div>
+        <p className="font-mono text-base text-muted" dir="ltr">
+          {controllerUrl ?? '…'}
+        </p>
+        {REALTIME_KIND === 'local' && (
+          <p className="max-w-md rounded-2xl bg-saffron-soft px-4 py-2 text-center text-sm text-saffron-deep">
+            وضع الاختبار المحلي: مفاتيح Supabase غير موجودة، فتعمل يد التحكم فقط في تبويب آخر من المتصفح نفسه.
+          </p>
+        )}
+        {showPing && (
+          <p className="font-mono text-sm text-muted" dir="ltr">
+            laptop↔Supabase {screenPing == null ? '–' : `${Math.round(screenPing)} ms`}
+          </p>
         )}
       </section>
     </div>
   )
 }
 
-function PlayerCard({ slot, info, showPing }) {
+function PlayerCard({ slot, info, ping, showPing }) {
   const char = CHARACTERS[info?.character ?? DEFAULT_PICKS[slot]]
   const human = info?.type === 'human'
   const connected = human && info.connected
@@ -117,9 +115,9 @@ function PlayerCard({ slot, info, showPing }) {
         <p className="text-base text-muted">{char.regionAr}</p>
         <p className="text-lg font-bold">
           {status}
-          {showPing && info?.ping != null && (
+          {showPing && ping != null && (
             <span className="ms-2 font-mono text-sm text-muted" dir="ltr">
-              {info.ping} ms
+              {ping} ms
             </span>
           )}
         </p>

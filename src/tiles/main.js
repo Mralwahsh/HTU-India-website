@@ -11,7 +11,7 @@ import { getBest, getSetting, saveBest, setSetting } from './storage.js'
  * Raga Tiles, the phone page (/tiles). Everything is loaded here, once, behind the loading bar:
  * code (this small bundle), the headline font, every song, and the synthesized piano.
  * After that the game never touches the network (no server calls, no sockets), so any number of
- * phones can play at the same time and a dropped Wi-Fi changes nothing.
+ * phones can play at the same time and a dropped connection changes nothing.
  */
 
 const ui = document.getElementById('ui')
@@ -91,7 +91,7 @@ async function boot() {
     console.warn('[tiles] loading failed', e)
     show(`<section class="screen">
       <div class="logo"><h1>راغا تايلز</h1></div>
-      <p class="lead">تعذّر تحميل اللعبة. تأكد أنك متصل بشبكة الواي فاي الخاصة بالجناح.</p>
+      <p class="lead">تعذّر تحميل اللعبة. تأكد أن هاتفك متصل بالإنترنت (بيانات الهاتف أو أي واي فاي).</p>
       <button class="primary" data-act="retry">حاول مرة أخرى</button>
     </section>`)
     ui.querySelector('[data-act=retry]').onclick = () => location.reload()

@@ -5,10 +5,9 @@ import { KEYS } from '../tour/config.js'
 import { TOUR_PLACES, creditLine } from '../tour/places.js'
 import { connectTourSocket } from '../tour/net.js'
 import { MoveInterpreter } from '../tour/moveInterpreter.js'
-import { getConnectionInfo } from '../game/net/socket.js'
-import QrCode, { wifiQrText } from '../components/football/QrCode.jsx'
+import QrCode from '../components/football/QrCode.jsx'
 import TourMap from '../components/tour/TourMap.jsx'
-import boothConfig from '../config/booth.json'
+import { pageUrl, SCAN_HINT } from '../config/site.js'
 
 /**
  * Virtual tours on the laptop: map of places → 360° tour.
@@ -19,7 +18,6 @@ export default function TourPage() {
   const socketRef = useRef(null)
   const hostRef = useRef(null)
   const providerRef = useRef(null)
-  const [info, setInfo] = useState(null)
   const [serverOk, setServerOk] = useState(null)
   const [phone, setPhone] = useState(false)
   const [mode, setMode] = useState('map') // map | loading | tour
@@ -34,7 +32,7 @@ export default function TourPage() {
   })
 
   const place = TOUR_PLACES[selected]
-  const controllerUrl = info ? `http://${info.ip}:${window.location.port || 80}/tour-controller` : null
+  const controllerUrl = pageUrl('/tour-controller')
 
   // ------------------------------------------------------------ provider lifecycle
   const enterTour = useCallback(async (index) => {
@@ -120,10 +118,6 @@ export default function TourPage() {
 
   // ------------------------------------------------------------ socket (tour namespace)
   useEffect(() => {
-    getConnectionInfo().then((i) => {
-      setInfo(i)
-      setServerOk(!!i)
-    })
     const socket = connectTourSocket()
     socketRef.current = socket
     socket.on('connect', () => {
@@ -303,17 +297,14 @@ function MapScreen({ selected, setSelected, onEnter, controllerUrl, serverOk, ph
               {controllerUrl && <QrCode text={controllerUrl} size={150} />}
               <div className="min-w-0">
                 <p className="font-display text-2xl font-extrabold text-navy">امسح للتحكم بالجولة</p>
+                <p className="text-base font-bold text-ink/80">📱 {SCAN_HINT}</p>
                 <p className="font-mono text-base text-muted" dir="ltr">
-                  {controllerUrl ?? '…'}
+                  {controllerUrl}
                 </p>
                 <p className={`mt-1 text-lg font-bold ${phone ? 'text-green' : 'text-muted'}`}>{phone ? '✅ الهاتف متصل' : 'بانتظار هاتف…'}</p>
                 <p className="text-sm text-muted" dir="ltr">
                   Keyboard: A/D choose · W enter · arrows look · +/− zoom · I info · N next · Esc map
                 </p>
-              </div>
-              <div className="ms-auto flex items-center gap-3 rounded-2xl bg-green-soft p-2">
-                <QrCode text={wifiQrText(boothConfig.wifi)} size={90} dark="#0d5c06" />
-                <span className="text-sm font-bold text-green">الواي فاي</span>
               </div>
             </>
           )}

@@ -1,6 +1,8 @@
-// Socket.IO protocol shared by the Node server (server/) and the browser (src/).
+// Football constants shared by the pages (src/) and the old offline server (legacy-local-server/).
 // Keep this file dependency-free: it is imported on both sides.
+// The web version's realtime messages are described in src/game/net/footballProtocol.js.
 
+// Socket.IO events: only used by legacy-local-server/ now
 export const EV = {
   // laptop screen → server
   SCREEN_JOIN: 'screen:join', // ack: room state

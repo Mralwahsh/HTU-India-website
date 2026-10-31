@@ -1,8 +1,9 @@
+// LEGACY (see README.md): the old offline booth server. The site now runs on Vercel + Supabase.
 // India Speaks booth server: serves the built site and relays phone-controller input to the
 // laptop screen over Socket.IO. Fully offline: no database, no auth, no internet calls.
 //
-//   node server/index.js          → API + sockets only (dev: Vite serves the site and proxies to us)
-//   node server/index.js --prod   → also serves dist/ (booth mode)
+//   node legacy-local-server/index.js          → API + sockets only
+//   node legacy-local-server/index.js --prod   → also serves dist/ (booth mode)
 import express from 'express'
 import { createServer } from 'node:http'
 import { existsSync } from 'node:fs'

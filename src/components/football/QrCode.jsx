@@ -25,9 +25,3 @@ export default function QrCode({ text, size = 280, dark = '#000080', light = '#f
     />
   )
 }
-
-/** Wi-Fi join string understood by iPhone & Android cameras. */
-export function wifiQrText({ ssid, password, security = 'WPA' }) {
-  const esc = (s) => String(s).replace(/([\\;,:"])/g, '\\$1')
-  return `WIFI:T:${security};S:${esc(ssid)};P:${esc(password)};;`
-}

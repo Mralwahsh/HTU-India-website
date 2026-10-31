@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Volume2, VolumeX } from 'lucide-react'
-import { CHARACTER_IDS, DEFAULT_PICKS, EV } from '../../shared/protocol.js'
-import { connectSocket, getConnectionInfo, measurePing } from '../game/net/socket.js'
-import { createInputBus, NetworkInputSource } from '../game/input/NetworkInputSource.js'
+import { CHARACTER_IDS, DEFAULT_PICKS } from '../../shared/protocol.js'
+import { FootballHost } from '../game/net/FootballHost.js'
+import { SupabaseInputSource } from '../game/input/SupabaseInputSource.js'
 import { CombinedInputSource } from '../game/input/InputSource.js'
 import { KEYMAPS, KeyboardInputSource } from '../game/input/KeyboardInputSource.js'
 import { CHARACTERS, SLOT_LABEL_AR } from '../game/football/characters/index.js'
@@ -13,25 +13,27 @@ import { sfx } from '../game/sfx.js'
 import FootballLobby from '../components/football/FootballLobby.jsx'
 import FootballStage from '../components/football/FootballStage.jsx'
 import QrCode from '../components/football/QrCode.jsx'
+import RealtimeDebug from '../components/RealtimeDebug.jsx'
+import { pageUrl } from '../config/site.js'
+import { prettyRoomCode } from '../realtime/roomCode.js'
+import { stats } from '../realtime/stats.js'
 
 const RESULT_TIMEOUT_S = 15
 
 /**
  * "Big Head Football" on the laptop: lobby → match → result.
- * The page owns the socket and turns phone input into InputSources; the game itself
- * (FootballStage / Phaser) only ever sees InputSources.
+ * The page owns the room (FootballHost: room code + Supabase Realtime channels) and turns phone input
+ * into InputSources; the game itself (FootballStage / Phaser) only ever sees InputSources.
  */
 export default function FootballPage() {
-  const bus = useMemo(() => createInputBus(), [])
-  const socketRef = useRef(null)
-  const [room, setRoom] = useState(null)
-  const [serverOk, setServerOk] = useState(null)
-  const [info, setInfo] = useState(null)
+  const hostRef = useRef(null)
+  const [net, setNet] = useState({ code: null, status: 'connecting', room: null, pings: {} })
+  const room = net.room
   const [phase, setPhase] = useState('lobby') // lobby | playing | paused | result
   const [match, setMatch] = useState(null) // { id, sources, characters }
   const [score, setScore] = useState({ p1: 0, p2: 0 })
   const [result, setResult] = useState(null) // { winner, score, records }
-  const [pausedSlot, setPausedSlot] = useState(null)
+  const [pausedSlot, setPausedSlot] = useState(null) // 'p1' | 'p2' | 'net' (the laptop lost its connection)
   const [resumeIn, setResumeIn] = useState(0)
   const [showPing, setShowPing] = useState(false)
   const [screenPing, setScreenPing] = useState(null)
@@ -47,48 +49,51 @@ export default function FootballPage() {
   })
   const resultShownAt = useRef(0)
 
-  const controllerUrl = info ? `http://${info.ip}:${window.location.port || 80}/controller` : null
+  const controllerUrl = net.code ? pageUrl(`/controller?room=${net.code}`) : null
 
-  // ------------------------------------------------------------ socket
+  // ------------------------------------------------------------ room (Supabase Realtime)
   useEffect(() => {
-    getConnectionInfo().then((i) => {
-      setInfo(i)
-      setServerOk(!!i)
+    const host = new FootballHost({
+      onChange: setNet,
+      onPlayerDisconnected: (slot) => {
+        if (phaseRef.current === 'playing') {
+          setPausedSlot(slot)
+          setPhase('paused')
+        }
+      },
+      onPlayerConnected: (slot) => {
+        if (phaseRef.current === 'paused' && pausedSlotRef.current === slot) setResumeIn(3)
+      },
     })
-    const socket = connectSocket()
-    socketRef.current = socket
-    socket.on('connect', () => {
-      setServerOk(true)
-      socket.emit(EV.SCREEN_JOIN, (state) => setRoom(state))
-      socket.emit(EV.SCREEN_STATE, { phase: phaseRef.current })
-    })
-    socket.on('connect_error', () => setServerOk(false))
-    socket.on(EV.ROOM_UPDATE, setRoom)
-    socket.on(EV.INPUT, (msg) => bus.emit(msg))
-    socket.on(EV.PLAYER_DISCONNECTED, ({ slot }) => {
-      if (phaseRef.current === 'playing') {
-        setPausedSlot(slot)
-        setPhase('paused')
-      }
-    })
-    socket.on(EV.PLAYER_CONNECTED, ({ slot }) => {
-      if (phaseRef.current === 'paused' && pausedSlotRef.current === slot) setResumeIn(3)
-    })
+    hostRef.current = host
+    if (import.meta.env.DEV) window.__footballHost = host // debugging aid (window.__football is the Phaser scene)
     return () => {
-      socket.emit(EV.SCREEN_STATE, { phase: 'lobby' })
-      socket.disconnect()
+      host.destroy()
+      hostRef.current = null
     }
-  }, [bus])
+  }, [])
 
-  // tell the server (and through it the phones) the phase and score
+  // tell the phones the phase and score
   useEffect(() => {
-    socketRef.current?.emit(EV.SCREEN_STATE, { phase, score })
+    hostRef.current?.setPhase(phase, score)
   }, [phase, score])
+
+  // the laptop itself lost its connection during a match: pause, and count down once it is back
+  useEffect(() => {
+    if (net.status !== 'live' && phaseRef.current === 'playing') {
+      setPausedSlot('net')
+      setPhase('paused')
+    } else if (net.status === 'live' && phaseRef.current === 'paused' && pausedSlotRef.current === 'net') {
+      const missing = ['p1', 'p2'].find((s) => roomRef.current?.slots?.[s]?.type === 'human' && !roomRef.current.slots[s].connected)
+      if (missing) setPausedSlot(missing)
+      else setResumeIn(3)
+    }
+  }, [net.status])
 
   // ------------------------------------------------------------ match lifecycle
   const startMatch = useCallback(() => {
     const slots = roomRef.current?.slots ?? {}
-    const source = (slot) => new CombinedInputSource([new NetworkInputSource(bus, slot), new KeyboardInputSource(KEYMAPS[slot])])
+    const source = (slot) => new CombinedInputSource([new SupabaseInputSource(hostRef.current, slot), new KeyboardInputSource(KEYMAPS[slot])])
     // Step (b): P2 is played on the keyboard (arrow keys) when no phone has joined. The CPU comes next.
     const sources = { p1: source('p1'), p2: source('p2') }
     const characters = {
@@ -100,7 +105,7 @@ export default function FootballPage() {
     setScore({ p1: 0, p2: 0 })
     setMatch({ id: Date.now(), sources, characters })
     setPhase('playing')
-  }, [bus])
+  }, [])
 
   useEffect(() => {
     if (!match) return
@@ -110,11 +115,14 @@ export default function FootballPage() {
   const backToLobby = useCallback(() => {
     setMatch(null)
     setResult(null)
+    setPausedSlot(null)
+    setResumeIn(0)
     setPhase('lobby')
     setRecords(getTodayRecords())
+    hostRef.current?.newRoom() // a fresh code for the next visitors; phones on the old one are told to scan again
   }, [])
 
-  const buzz = useCallback((slot, pattern) => socketRef.current?.emit(EV.SCREEN_BUZZ, { slot, pattern }), [])
+  const buzz = useCallback((slot, pattern) => hostRef.current?.buzz(slot, pattern), [])
 
   const onGameEvent = useCallback(
     (ev) => {
@@ -151,9 +159,9 @@ export default function FootballPage() {
       let i = CHARACTER_IDS.indexOf(cur)
       do i = (i + dir + CHARACTER_IDS.length) % CHARACTER_IDS.length
       while (CHARACTER_IDS[i] === other)
-      socketRef.current?.emit(EV.SCREEN_PICK, { slot, characterId: CHARACTER_IDS[i] })
+      hostRef.current?.pickFor(slot, CHARACTER_IDS[i])
     }
-    const off = bus.on((msg) => msg.pressed && msg.button === 'kick' && tryStart())
+    const off = hostRef.current?.onInput((msg) => msg.pressed && msg.button === 'kick' && tryStart())
     const onKey = (e) => {
       if (e.repeat) return
       if (e.code === 'KeyP') setShowPing((v) => !v)
@@ -164,10 +172,10 @@ export default function FootballPage() {
     }
     window.addEventListener('keydown', onKey)
     return () => {
-      off()
+      off?.()
       window.removeEventListener('keydown', onKey)
     }
-  }, [bus, startMatch])
+  }, [startMatch])
 
   // result → lobby after 15 s
   const [resultLeft, setResultLeft] = useState(RESULT_TIMEOUT_S)
@@ -201,7 +209,7 @@ export default function FootballPage() {
 
   useEffect(() => {
     if (!showPing) return
-    const t = setInterval(async () => socketRef.current && setScreenPing(await measurePing(socketRef.current)), 1500)
+    const t = setInterval(() => setScreenPing(stats.rtt.server ?? null), 1500)
     return () => clearInterval(t)
   }, [showPing])
 
@@ -210,8 +218,10 @@ export default function FootballPage() {
       {phase === 'lobby' || !match ? (
         <FootballLobby
           controllerUrl={controllerUrl}
+          code={net.code}
+          status={net.status}
           room={room}
-          serverOk={serverOk}
+          pings={net.pings}
           records={records}
           showPing={showPing}
           screenPing={screenPing}
@@ -238,13 +248,28 @@ export default function FootballPage() {
             ) : (
               <div className="flex items-center gap-10">
                 <div className="max-w-xl">
-                  <p className="font-display text-5xl leading-snug font-extrabold text-white">انقطع اتصال {SLOT_LABEL_AR[pausedSlot] ?? 'اللاعب'}</p>
-                  <p className="mt-3 text-3xl text-white/80">امسح الرمز مجددًا للعودة إلى المباراة</p>
+                  {pausedSlot === 'net' ? (
+                    <>
+                      <p className="font-display text-5xl leading-snug font-extrabold text-white">انقطع اتصال الحاسوب بالإنترنت</p>
+                      <p className="mt-3 text-3xl text-white/80">جارٍ إعادة الاتصال… ستُستأنف المباراة تلقائيًا</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-display text-5xl leading-snug font-extrabold text-white">انقطع اتصال {SLOT_LABEL_AR[pausedSlot] ?? 'اللاعب'}</p>
+                      <p className="mt-3 text-3xl text-white/80">امسح الرمز مجددًا للعودة إلى المباراة</p>
+                      <p className="mt-2 text-2xl text-white/70">
+                        رمز الغرفة:{' '}
+                        <bdi className="font-mono font-bold text-white" dir="ltr">
+                          {prettyRoomCode(net.code)}
+                        </bdi>
+                      </p>
+                    </>
+                  )}
                   <button onClick={backToLobby} className="mt-6 rounded-full bg-white/15 px-6 py-2 text-xl font-bold text-white hover:bg-white/25">
                     إنهاء المباراة
                   </button>
                 </div>
-                {controllerUrl && <QrCode text={controllerUrl} size={260} />}
+                {pausedSlot !== 'net' && controllerUrl && <QrCode text={controllerUrl} size={260} />}
               </div>
             )}
           </Overlay>
@@ -255,6 +280,7 @@ export default function FootballPage() {
           </Overlay>
         )}
       </AnimatePresence>
+      <RealtimeDebug estimateProject />
     </div>
   )
 }

@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.vercel
 
 # Editor directories and files
 .vscode/*
@@ -26,5 +28,5 @@ dist-ssr
 # Local Claude Code preview config
 .claude/
 
-# runtime data written by the booth server (chess leaderboard)
+# runtime data written by the old local booth server (legacy-local-server/)
 /data/
