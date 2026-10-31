@@ -4,7 +4,7 @@
 
 # India Speaks · الهند تتحدّث
 
-**An interactive, offline booth website that shows visitors how many languages India speaks.**
+**An interactive booth website that shows visitors how many languages India speaks.** Live at **https://htuindia.lol**.
 Built for the India booth at **HTU International Week** (Al Hussein Technical University, Jordan).
 
 <p dir="rtl"><b>موقع تفاعلي يعرّف زوّار جناح الهند بتنوّع لغات الهند وخطوطها: اكتب اسمك وشاهده بخطوط هندية، استكشف خريطة اللغات، والعب «خمّن الخط»!</b></p>
@@ -13,7 +13,8 @@ Built for the India booth at **HTU International Week** (Al Hussein Technical Un
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38bdf8?logo=tailwindcss&logoColor=white)
 ![HarfBuzz](https://img.shields.io/badge/HarfBuzz-WASM-ff9933)
-![Offline](https://img.shields.io/badge/works-100%25_offline-138808)
+![Vercel](https://img.shields.io/badge/hosted_on-Vercel-000000?logo=vercel&logoColor=white)
+![Supabase](https://img.shields.io/badge/realtime-Supabase-3ecf8e?logo=supabase&logoColor=white)
 ![Interface](https://img.shields.io/badge/UI-Arabic_(RTL)-000080)
 
 </div>
@@ -51,20 +52,24 @@ You need [Node.js](https://nodejs.org/) 20.19 or newer (22 LTS recommended).
 ```bash
 git clone https://github.com/Mralwahsh/Indian-languages-website.git
 cd Indian-languages-website
-npm install        # once, while you have internet
-npm start          # builds the site and serves it on http://localhost:3000
+npm install
+copy .env.example .env.local   # then fill in the Supabase keys (optional for a first look)
+npm run dev                    # http://localhost:5173
 ```
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | Build + start the booth server on port 3000 (site, game and phone controller). |
-| `npm run serve` | Start the server again without rebuilding. |
-| `npm run dev` | Development: Node server + Vite with live reload (http://localhost:5173), reachable from phones on the same network. |
+| `npm run dev` | Development with live reload (http://localhost:5173), reachable from phones on the same network. |
+| `npm run build` | Verify the chess puzzles, then build the static site into `dist/` (what Vercel runs). |
+| `npm start` | Build + serve the production version locally (http://localhost:4173). |
 | `npm run sim` | Plays hundreds of fights with the real game engine to check the balance (no browser needed). |
 
-**Using phones as controllers? Read [BOOTH_SETUP.md](BOOTH_SETUP.md)**: Windows Mobile Hotspot, firewall, start-up and troubleshooting.
+**Deploying?** [DEPLOY.md](DEPLOY.md): Supabase project, Vercel, environment variables, the `htuindia.lol` domain.
+**At the booth?** [BOOTH_SETUP.md](BOOTH_SETUP.md): the morning checklist, each feature, troubleshooting.
 
-After `npm install` everything runs **without internet**: fonts, map data and the HarfBuzz engine are all inside the project.
+Fonts, map data and the HarfBuzz engine are all inside the project (no font or map services). Visitors' phones use their own
+mobile data; only the phone-controller games need a live connection (Supabase Realtime). The last fully-offline version
+(laptop server + Windows hotspot) is the git tag `local-hotspot-version`.
 
 ## 🎪 At the booth
 
@@ -80,8 +85,8 @@ Timings are in [`src/config/booth.js`](src/config/booth.js).
 
 **Before the event**
 
-- [ ] Run `npm start` once with **Wi-Fi turned off** and click through every page
-- [ ] Follow [BOOTH_SETUP.md](BOOTH_SETUP.md) and play one fight with a real phone
+- [ ] Open https://htuindia.lol and click through every page
+- [ ] Follow the morning checklist in [BOOTH_SETUP.md](BOOTH_SETUP.md) and play one match with a phone on mobile data
 - [ ] Use Chrome or Edge, browser zoom 100 %, fullscreen on
 - [ ] Turn off sleep / screensaver and keep the charger connected
 
@@ -90,7 +95,8 @@ Timings are in [`src/config/booth.js`](src/config/booth.js).
 | | |
 | --- | --- |
 | Framework | React 19 + Vite, React Router |
-| Server | Node.js + Express + Socket.IO (local network only, no database) |
+| Hosting | Vercel (static site, no server code) |
+| Realtime | Supabase Realtime: Broadcast + Presence, one channel per 6-character room code (phone controllers) |
 | Game | Phaser 3, with a separate pure-JS fight engine |
 | Styling | Tailwind CSS 4, Framer Motion animations, right-to-left Arabic layout |
 | Map | d3-geo + topojson-client |
@@ -123,15 +129,16 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    P[📱 Phone<br/>/controller] -- "press / release<br/>(Socket.IO)" --> S[Node server<br/>room: P1, P2]
-    S -- input --> L[💻 Laptop /fight<br/>Phaser game]
-    L -- hit --> S -- vibrate --> P
+    P[📱 Phone<br/>/controller?room=K7QM2X] -- "press / release" --> R[Supabase Realtime<br/>room:K7QM2X:p1]
+    R --> L[💻 Laptop /football<br/>room owner + Phaser game]
+    L -- "goal → vibrate" --> R --> P
 ```
 
-- The server only **relays button presses and releases** and keeps track of who is Player 1 / Player 2. Each slot is a phone or the CPU. Phase 1 = one phone vs the CPU. Switching `P2_MODE` in [`shared/protocol.js`](shared/protocol.js) to `'human'` lets a second phone take P2.
+- There is no server of our own: the **laptop page owns the room** (who is Player 1 / Player 2, characters, phase, score) and the phones only send **button presses and releases** (with the full "held" state, so a lost message repairs itself). Each player has its own channel, so phones never receive each other's input. See [`src/game/net/footballProtocol.js`](src/game/net/footballProtocol.js).
+- A new room code after every game; the QR on the laptop carries it. Supabase's free plan allows ~100 messages/s; a match uses ~30–45.
 - The game reads every player through the same **InputSource** interface (phone, keyboard or CPU), so it never knows where input comes from.
 - The fight logic (`src/game/engine/`) is plain JavaScript with no Phaser, running at a fixed 60 steps per second. That's why `npm run sim` can test it in Node.
-- A phone that drops (screen lock, Wi-Fi hiccup) pauses the match and gets **its own slot back** when it reconnects.
+- A phone that drops (screen lock, lost signal) pauses the match and gets **its own slot back** when it reconnects.
 
 ### Real letter shapes
 
@@ -143,8 +150,8 @@ Indian scripts join and reorder letters (ि is written *before* the consonant i
 ## 📁 Project structure
 
 ```
-server/          Express + Socket.IO booth server (room with P1/P2 slots, LAN-IP detection)
-shared/          protocol.js: socket event names, shared by server and browser
+legacy-local-server/  the old offline booth server (reference only, see its README)
+shared/          protocol.js (slots, buttons, characters), nicknames.js
 public/
   data/          india_states.topojson (state borders), neighbors.topojson (gray countries)
   fonts/         Noto .ttf files, used by CSS and by HarfBuzz
@@ -159,7 +166,8 @@ src/
     phaser/      FightScene, stage, fighter views, HUD
   services/      dataService (all data access) · transliteration · glyphService (HarfBuzz) · scriptInfo
   data/          languages, states, names, arabicWords, gameRounds (.json)
-  config/        booth.json (hotspot Wi-Fi name/password), booth.js (timings), scripts, nameScripts
+  realtime/      Supabase Realtime channels (+ a same-browser test mode), room codes, message counters
+  config/        site.js (QR addresses), booth.js (timings), scripts, nameScripts
 scripts/         simulate-fights.mjs (npm run sim)
 ```
 
@@ -174,7 +182,6 @@ All texts shown to visitors are plain JSON in [`src/data/`](src/data). No code c
 | Names and their spellings (add a `"malayalam"` field to override the generated one) | [`names.json`](src/data/names.json) |
 | Hindi ⇄ Arabic word cards | [`arabicWords.json`](src/data/arabicWords.json) |
 | Game words | [`gameRounds.json`](src/data/gameRounds.json) |
-| Hotspot Wi-Fi name / password (Wi-Fi QR code) | [`src/config/booth.json`](src/config/booth.json) |
 | Fighters, moves, damage, real sprite art | [`src/game/characters/`](src/game/characters) ([guide](src/game/characters/README.md)) |
 | Tour places, facts, walking directions | [`src/tour/places.js`](src/tour/places.js) (photos in `public/tours/`) |
 | Tour controls feel (look speed, dead zone, walk interval) | [`src/tour/config.js`](src/tour/config.js) |
@@ -184,11 +191,11 @@ All texts shown to visitors are plain JSON in [`src/data/`](src/data). No code c
 
 - **India Fighters, Phase 2**: two phones fight each other (the server already has P1/P2 slots).
 
-The code is ready for a backend (**Node.js + Supabase + OpenRouter**):
+The code is ready for AI spellings (**Supabase Edge Function + OpenRouter**):
 
-- `transliterateName()` is already `async`: swap its body for a call to the Node API to get AI spellings for any name.
+- `transliterateName()` is already `async`: swap its body for a call to a Supabase Edge Function that asks OpenRouter for any name.
 - Every `get…()` function in `dataService.js` returns the same shape as the JSON files, so they can read from Supabase tables instead.
-- 🔒 API keys stay on the server: never put them in the frontend.
+- 🔒 Secret API keys (OpenRouter, Supabase service role) stay in the Edge Function: never in the frontend. Only the public Supabase anon key and the referrer-restricted Maps key ship in the page.
 
 ## ✅ To verify before the event
 
@@ -231,3 +238,5 @@ The code is ready for a backend (**Node.js + Supabase + OpenRouter**):
 Made with 🧡🤍💚 by the India team · HTU International Week
 
 </div>
+#   H T U - I n d i a - w e b s i t e  
+ 
