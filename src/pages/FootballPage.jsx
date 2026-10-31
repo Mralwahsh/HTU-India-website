@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Volume2, VolumeX } from 'lucide-react'
 import { CHARACTER_IDS, DEFAULT_PICKS } from '../../shared/protocol.js'
 import { FootballHost } from '../game/net/FootballHost.js'
+import { bothPlayersReady } from '../game/net/footballProtocol.js'
 import { SupabaseInputSource } from '../game/input/SupabaseInputSource.js'
 import { CombinedInputSource } from '../game/input/InputSource.js'
 import { KEYMAPS, KeyboardInputSource } from '../game/input/KeyboardInputSource.js'
@@ -19,6 +20,9 @@ import { prettyRoomCode } from '../realtime/roomCode.js'
 import { stats } from '../realtime/stats.js'
 
 const RESULT_TIMEOUT_S = 15
+// A match needs two phones (no playing against the computer). Opening the page as /football?keyboard lets the
+// laptop keyboard start a match without phones, for testing (P1: A D W S, P2: arrow keys).
+const KEYBOARD_TEST = new URLSearchParams(window.location.search).has('keyboard')
 
 /**
  * "Big Head Football" on the laptop: lobby → match → result.
@@ -94,7 +98,7 @@ export default function FootballPage() {
   const startMatch = useCallback(() => {
     const slots = roomRef.current?.slots ?? {}
     const source = (slot) => new CombinedInputSource([new SupabaseInputSource(hostRef.current, slot), new KeyboardInputSource(KEYMAPS[slot])])
-    // Step (b): P2 is played on the keyboard (arrow keys) when no phone has joined. The CPU comes next.
+    // each player is a phone (the laptop keyboard also works for both, for testing)
     const sources = { p1: source('p1'), p2: source('p2') }
     const characters = {
       p1: CHARACTERS[slots.p1?.character ?? DEFAULT_PICKS.p1],
@@ -144,9 +148,10 @@ export default function FootballPage() {
     [buzz, match],
   )
 
-  // KICK (phone or keyboard) starts / restarts; in the lobby ◀ ▶ / A D / ← → change characters of non-phone players
+  // KICK (phone or keyboard) starts / restarts, once both phones are in; in the lobby A D / ← → change characters of non-phone players
   useEffect(() => {
-    const tryStart = () => {
+    const tryStart = (fromKeyboard = false) => {
+      if (!bothPlayersReady(roomRef.current) && !(fromKeyboard && KEYBOARD_TEST)) return // waiting for the second player
       const ph = phaseRef.current
       if (ph === 'lobby') startMatch()
       else if (ph === 'result' && performance.now() - resultShownAt.current > 2800) startMatch()
@@ -166,7 +171,7 @@ export default function FootballPage() {
       if (e.repeat) return
       if (e.code === 'KeyP') setShowPing((v) => !v)
       else if (e.code === 'KeyM') setMuted(sfx.toggle())
-      else if (e.code === 'KeyS' || e.code === 'ArrowDown') tryStart()
+      else if (e.code === 'KeyS' || e.code === 'ArrowDown') tryStart(true)
       else if (e.code === 'KeyA' || e.code === 'KeyD') cyclePick('p1', e.code === 'KeyD' ? 1 : -1)
       else if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') cyclePick('p2', e.code === 'ArrowRight' ? 1 : -1)
     }
@@ -225,6 +230,7 @@ export default function FootballPage() {
           records={records}
           showPing={showPing}
           screenPing={screenPing}
+          keyboardTest={KEYBOARD_TEST}
         />
       ) : (
         <FootballStage key={match.id} characters={match.characters} sources={match.sources} paused={phase !== 'playing'} onEvent={onGameEvent} />
@@ -276,7 +282,7 @@ export default function FootballPage() {
         )}
         {phase === 'result' && result && match && (
           <Overlay key="result">
-            <ResultCard result={result} characters={match.characters} secondsLeft={resultLeft} />
+            <ResultCard result={result} characters={match.characters} secondsLeft={resultLeft} ready={bothPlayersReady(room) || KEYBOARD_TEST} />
           </Overlay>
         )}
       </AnimatePresence>
@@ -293,7 +299,7 @@ function Overlay({ children }) {
   )
 }
 
-function ResultCard({ result, characters, secondsLeft }) {
+function ResultCard({ result, characters, secondsLeft, ready }) {
   const winner = result.winner ? characters[result.winner] : null
   return (
     <motion.div className="flex flex-col items-center text-center text-white" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
@@ -321,7 +327,7 @@ function ResultCard({ result, characters, secondsLeft }) {
         animate={{ scale: [1, 1.05, 1] }}
         transition={{ duration: 1.2, repeat: Infinity }}
       >
-        اضغط «ركل» للعب مجددًا
+        {ready ? 'اضغط «ركل» للعب مجددًا' : 'بانتظار لاعب ثانٍ للعب مجددًا…'}
       </motion.p>
       <p className="mt-4 text-xl text-white/70">العودة إلى صفحة الانتظار بعد {Math.max(0, secondsLeft)} ثانية</p>
     </motion.div>

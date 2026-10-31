@@ -16,7 +16,7 @@ Supabase Realtime. How it is deployed: [DEPLOY.md](DEPLOY.md).
 2. **Supabase is awake**: open the [Supabase dashboard](https://supabase.com/dashboard). If the project says *Paused*, press **Restore** and wait until it is green (free projects pause after about a week without use).
 3. **Open the site**: **https://htuindia.lol** in Chrome or Edge, fullscreen (**F11** or the ⛶ button), and click once on the page (browsers only play sound after a click).
 4. **Test one QR per feature with a phone on mobile data** (Wi-Fi off):
-   - Football `/football`: scan → the phone shows *اللاعب 1* → press **ركل** → the match starts. Press **Shift+D** on the laptop: the phone's round trip (`p1 … ms`) should be under ~250 ms.
+   - Football `/football`: scan with **two phones** → they show *اللاعب 1* and *اللاعب 2* → press **ركل** → the match starts. Press **Shift+D** on the laptop: each phone's round trip (`p1 … ms`, `p2 … ms`) should be under ~250 ms.
    - Raga Tiles `/tiles-qr`: scan → the song list loads.
    - Chess `/chess`: scan the puzzle QR → the first puzzle appears.
    - Tours `/tour`: scan → the laptop shows "✅ الهاتف متصل" → push the left stick up to enter a place.
@@ -39,8 +39,9 @@ Supabase Realtime. How it is deployed: [DEPLOY.md](DEPLOY.md).
 2. The lobby shows a QR code and a **room code** (e.g. `K7Q M2X`). Visitors scan the QR with the phone camera; the
    controller opens at `htuindia.lol/controller?room=K7QM2X`. Without a camera they can open `htuindia.lol/controller`
    and type the room code.
-3. The first phone is **Player 1**, the second **Player 2**; without a second phone, P2 is played on the keyboard.
-4. Players pick a character with ◀ ▶ and press **ركل** (kick) to start.
+3. A match needs **two phones** (there is no playing against the computer): the first phone is **Player 1**, the second
+   **Player 2**. Until the second phone joins, the lobby shows "بانتظار اللاعب الثاني…" and **ركل** does nothing.
+4. Both players pick a character with ◀ ▶; once both are in, either one presses **ركل** (kick) to start.
 
 After every game the laptop shows a **new room code** (when it goes back to the lobby). Phones on the old code are told
 "انتهت هذه الجولة" and scan again; a rematch straight from the result screen (press **ركل**) keeps the same code.
@@ -50,7 +51,7 @@ After every game the laptop shows a **new room code** (when it goes back to the 
 | Key | Action |
 | --- | --- |
 | **Esc** / **من جديد** button | End the match and go back to the lobby (with a new room code) |
-| **A D W S** | Play P1 with the keyboard (move, jump, kick); in the lobby A/D change P1's character |
+| **A D W S** | Play P1 with the keyboard (move, jump, kick); in the lobby A/D change P1's character. To start a match **without phones** (testing), open `/football?keyboard` and press **S** |
 | **← → ↑ ↓** | Play P2 with the keyboard; in the lobby ←/→ change P2's character |
 | **P** | Show / hide each phone's ping on the lobby |
 | **Shift+D** | Developer overlay: Realtime messages per second and round trips (phones: tap the ping three times) |
@@ -60,8 +61,8 @@ After every game the laptop shows a **new room code** (when it goes back to the 
 
 1. Scan the QR code with the phone camera
 2. Turn the phone sideways
-3. Pick a player with the arrows
-4. Press «ركل» to start the match
+3. A friend scans the code with their phone too
+4. Both pick a player with the arrows, then press «ركل»
 
 ---
 
@@ -73,6 +74,7 @@ After every game the laptop shows a **new room code** (when it goes back to the 
 | **Lobby shows "وضع الاختبار المحلي"** | The site was built without the Supabase keys. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel and redeploy ([DEPLOY.md](DEPLOY.md) §3). |
 | **Phone shows "لا تجد الشاشة هذه الغرفة" or "انتهت هذه الجولة"** | The code is old (the laptop moved on to a new game). Scan the QR on the laptop again. |
 | **"اللعبة ممتلئة" (game full) on a phone** | Two phones are already playing. The phone joins by itself when the match ends. |
+| **ركل does nothing / "بانتظار اللاعب الثاني…"** | A match needs two phones. The second player scans the same QR (same room code). |
 | **A player's phone locked or lost signal mid-match** | The match pauses after a few seconds. Unlock the phone / reopen the page (it gets its slot back by itself) or scan the QR again; a 3-2-1 countdown resumes the match. |
 | **The laptop lost the internet mid-match** | The match pauses ("انقطع اتصال الحاسوب بالإنترنت") and resumes with a countdown when the connection is back. |
 | **Controls feel late** | Shift+D on the laptop: if the phone's round trip is above ~300 ms, try the phone on Wi-Fi instead of mobile data (or the other way round). |

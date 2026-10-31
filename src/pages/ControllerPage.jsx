@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CHARACTER_IDS, DEFAULT_PICKS } from '../../shared/protocol.js'
 import { FootballClient } from '../game/net/FootballClient.js'
+import { bothPlayersReady } from '../game/net/footballProtocol.js'
 import { CHARACTERS, SLOT_COLOR, SLOT_LABEL_AR } from '../game/football/characters/index.js'
 import { headDataUrl } from '../game/football/characters/art.js'
 import RealtimeDebug from '../components/RealtimeDebug.jsx'
@@ -128,6 +129,8 @@ function Controller({ code, onNewCode }) {
   const otherSlot = slot === 'p2' ? 'p1' : 'p2'
   const otherPick = room?.slots?.[otherSlot]?.type === 'human' ? room.slots[otherSlot].character : null
   const canPick = phase === 'lobby' || phase === 'result'
+  // a match needs two phones: until the friend joins, KICK does nothing
+  const phaseText = canPick && room && !bothPlayersReady(room) ? 'بانتظار اللاعب الثاني… اطلب من صديقك أن يمسح الرمز' : PHASE_TEXT[phase]
   const cyclePick = useCallback(
     (dir) => {
       if (!canPick) return
@@ -202,9 +205,9 @@ function Controller({ code, onNewCode }) {
           {canPick && slot ? (
             <CharacterPicker character={character} onCycle={cyclePick} />
           ) : (
-            <p className="text-[4vh] font-bold text-white/80">{PHASE_TEXT[phase]}</p>
+            <p className="text-[4vh] font-bold text-white/80">{phaseText}</p>
           )}
-          {canPick && <p className="mt-1 text-[3vh] font-bold text-white/70">{PHASE_TEXT[phase]}</p>}
+          {canPick && <p className="mt-1 text-[3vh] font-bold text-white/70">{phaseText}</p>}
         </div>
 
         <div className="flex items-end justify-end gap-[2.5vw]">

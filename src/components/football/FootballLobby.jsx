@@ -6,12 +6,17 @@ import { DEFAULT_PICKS } from '../../../shared/protocol.js'
 import { SCAN_HINT } from '../../config/site.js'
 import { REALTIME_KIND } from '../../realtime/channel.js'
 import { prettyRoomCode } from '../../realtime/roomCode.js'
+import { bothPlayersReady } from '../../game/net/footballProtocol.js'
 
-const STEPS = ['امسح الرمز بكاميرا هاتفك', 'أدر هاتفك بالعرض', 'اختر لاعبك بالسهمين', 'اضغط «ركل» لتبدأ المباراة']
+const STEPS = ['امسح الرمز بكاميرا هاتفك', 'أدر هاتفك بالعرض', 'صديقك يمسح الرمز بهاتفه أيضًا', 'اختارا لاعبيكما ثم اضغطا «ركل»']
 
 /** Lobby: QR code + room code, the two players with their characters, today's records, "press KICK". */
-export default function FootballLobby({ controllerUrl, code, status, room, pings, records, showPing, screenPing }) {
-  const anyone = ['p1', 'p2'].some((s) => room?.slots?.[s]?.type === 'human' && room.slots[s].connected)
+export default function FootballLobby({ controllerUrl, code, status, room, pings, records, showPing, screenPing, keyboardTest }) {
+  const joined = ['p1', 'p2'].filter((s) => room?.slots?.[s]?.type === 'human' && room.slots[s].connected).length
+  const ready = bothPlayersReady(room)
+  let callout = 'امسح الرمز لتلعب!'
+  if (ready) callout = 'اضغط «ركل» في هاتفك للبدء!'
+  else if (joined === 1) callout = 'بانتظار اللاعب الثاني… امسح الرمز!'
 
   return (
     <div className="mx-auto grid h-full max-w-[1800px] grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-8 px-10 py-5">
@@ -19,7 +24,7 @@ export default function FootballLobby({ controllerUrl, code, status, room, pings
         <h1 className="font-display text-5xl leading-tight font-extrabold text-navy 2xl:text-6xl">
           كرة <span className="text-saffron-deep">الرؤوس</span> <span className="text-green">الكبيرة</span> ⚽
         </h1>
-        <p className="text-2xl text-muted">العب بهاتفك، ضد الكمبيوتر أو ضد صديق!</p>
+        <p className="text-2xl text-muted">مباراة بين لاعبين: كل لاعب يتحكم بهاتفه!</p>
 
         <div className="mt-4 grid grid-cols-2 gap-4">
           {['p1', 'p2'].map((slot) => (
@@ -40,14 +45,15 @@ export default function FootballLobby({ controllerUrl, code, status, room, pings
 
         <div className="flex-1" />
         <motion.p
-          className={`rounded-full px-6 py-3 text-center font-display text-3xl font-extrabold ${anyone ? 'bg-green text-white' : 'bg-saffron-soft text-saffron-deep'}`}
+          className={`rounded-full px-6 py-3 text-center font-display text-3xl font-extrabold ${ready ? 'bg-green text-white' : 'bg-saffron-soft text-saffron-deep'}`}
           animate={{ scale: [1, 1.03, 1] }}
           transition={{ duration: 1.2, repeat: Infinity }}
         >
-          {anyone ? 'اضغط «ركل» في هاتفك للبدء!' : 'امسح الرمز لتلعب!'}
+          {callout}
         </motion.p>
         <p className="mt-2 text-center text-sm text-muted" dir="ltr">
           Keyboard: P1 A/D move · W jump · S kick — P2 ←/→ · ↑ jump · ↓ kick — A/D or ←/→ in the lobby change character · P = ping · M = sound
+          {keyboardTest ? ' · keyboard test mode: S starts a match without phones' : ' · /football?keyboard = test without phones'}
         </p>
       </section>
 
@@ -93,8 +99,7 @@ function PlayerCard({ slot, info, ping, showPing }) {
   let status
   if (connected) status = <span className="text-green">✅ متصل</span>
   else if (human) status = <span className="text-accent">⏳ انقطع الاتصال…</span>
-  else if (slot === 'p2') status = <span className="text-navy">🤖 الكمبيوتر</span>
-  else status = <span className="text-muted">بانتظار…</span>
+  else status = <span className="text-muted">بانتظار هاتف…</span>
 
   return (
     <div className="flex items-center gap-3 rounded-3xl bg-paper p-3 shadow-sm ring-2" style={{ '--tw-ring-color': `${SLOT_COLOR[slot]}88` }}>

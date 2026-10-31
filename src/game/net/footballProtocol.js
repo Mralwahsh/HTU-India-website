@@ -32,6 +32,9 @@ export const PHONE_TIMEOUT_MS = 6000
 /** The phone shows "reconnecting…" after this long without an answer from the laptop. */
 export const SCREEN_TIMEOUT_MS = 6000
 
+/** A match needs two players: both slots held by a connected phone (room = FootballRoom.publicState()). */
+export const bothPlayersReady = (room) => ['p1', 'p2'].every((s) => room?.slots?.[s]?.type === 'human' && room.slots[s].connected)
+
 /** { left: true, kick: true } ↔ bitmask (left = 1, right = 2, jump = 4, kick = 8). */
 export const toMask = (held) => BUTTONS.reduce((m, b, i) => (held[b] ? m | (1 << i) : m), 0)
 export const maskHas = (mask, button) => ((mask >> BUTTONS.indexOf(button)) & 1) === 1
