@@ -19,7 +19,7 @@ Supabase Realtime. How it is deployed: [DEPLOY.md](DEPLOY.md).
    - Football `/football`: scan → the phone shows *اللاعب 1* → press **ركل** → the match starts. Press **Shift+D** on the laptop: the phone's round trip (`p1 … ms`) should be under ~250 ms.
    - Raga Tiles `/tiles-qr`: scan → the song list loads.
    - Chess `/chess`: scan the puzzle QR → the first puzzle appears.
-   - Tours `/tour`: enter a place with the keyboard (W).
+   - Tours `/tour`: scan → the laptop shows "✅ الهاتف متصل" → push the left stick up to enter a place.
 5. **If the internet at the booth fails completely**: use the offline version (laptop server + Windows hotspot, no internet
    needed). Prepare it **the day before, while you have internet**, in its own folder next to this one, so its packages
    are already on the laptop:
@@ -96,19 +96,19 @@ Debug helpers in development builds: `window.__footballHost` (room, slots, held 
 
 ## 4. Virtual tours (`/tour`)
 
-Visitors walk through 360° photos of places in India with a phone that works like a gamepad. It has its **own controller page** (`/tour-controller`): the football `/controller` is not affected.
-
-> ⚠️ **Being migrated:** the tour's phone controller still talks to the old local server, so on the web version it
-> can't connect yet; it moves to Supabase Realtime in the next step. Until then drive the tour with the keyboard (below).
+Visitors walk through 360° photos of places in India with a phone that works like a gamepad. It has its **own controller page** (`/tour-controller`) and its own room code: the football `/controller` is not affected.
 
 ```
  Laptop:  https://htuindia.lol/tour
- Phones:  https://htuindia.lol/tour-controller   (the QR code on the tour screen)
+ Phones:  https://htuindia.lol/tour-controller?room=K7QM2X   (the QR code on the tour screen)
 ```
 
 1. Open **https://htuindia.lol/tour** (or click **جولات** in the top bar).
-2. The visitor scans the QR with the phone camera and turns the phone sideways.
+2. The visitor scans the QR with the phone camera (or opens `htuindia.lol/tour-controller` and types the **room code** shown under the QR), then turns the phone sideways.
 3. On the map, the **left stick** picks a place (← →) and pushing it **up** enters the tour.
+4. Inside a tour, the **كل الأماكن** button (top right, under the place name) goes back to the map of places, so a visitor can pick another place without leaving the page. The phone stays connected.
+
+The room code stays the same while the page is open. **Esc** / **من جديد** (new visitor) starts a fresh code: the phone on the old code is told to scan again.
 
 ### The phone controller
 
@@ -123,6 +123,8 @@ Visitors walk through 360° photos of places in India with a phone that works li
 
 The phone buzzes briefly on every step and twice when there is no path that way. **Only one phone controls the tour at a time.** A second phone shows "شخص آخر يتحكم بالجولة" and takes over automatically when the first one leaves (a phone that drops out keeps its seat for 15 s so it can reconnect).
 
+The phone sends both sticks in one message, only when they change and at most 10 times a second (once a second while a stick is held still); the laptop smooths the look stick between messages. Shift+D on the laptop (or three taps on the phone's ping) shows the message rate and the round trip.
+
 ### Keys on the laptop (testing without a phone)
 
 | Key | Action |
@@ -131,8 +133,9 @@ The phone buzzes briefly on every step and twice when there is no path that way.
 | **Arrow keys** | Look around |
 | **+ / −** | Zoom |
 | **I** | Facts |
+| **M** / **كل الأماكن** button | Back to the map of places (the phone stays connected) |
 | **N** | Next place |
-| **Esc** | Back to the map |
+| **Esc** | New visitor: back to the map with a new room code (the phone must scan again) |
 
 ### Offline photos or Google Street View
 
@@ -161,7 +164,7 @@ All the "feel" settings (stick dead zone, look speed, smoothing, walk interval, 
 
 ### Test with a real phone before the event
 
-- [ ] Scan the tour QR: the controller opens, shows the place name at the top and a green dot.
+- [ ] Scan the tour QR **on mobile data**: the controller opens, shows the place name at the top and a green dot; the laptop shows "✅ الهاتف متصل".
 - [ ] Hold the phone upright: the "turn your phone" screen appears; sideways: the controls come back.
 - [ ] Both sticks at the same time (walk + look) work with two thumbs.
 - [ ] Look stick: smooth turning, stops gently on release, can't look past straight up/down.
@@ -170,12 +173,13 @@ All the "feel" settings (stick dead zone, look speed, smoothing, walk interval, 
 - [ ] Walk into a wall: double buzz and "لا يوجد طريق في هذا الاتجاه" on the laptop.
 - [ ] Pull the left stick down: a smooth 180° turn.
 - [ ] Hold ⊕ / ⊖, then ℹ️, ⏭️ and 🗺️.
+- [ ] Inside a tour, click **كل الأماكن** on the laptop: back to the map, the phone still controls it.
 - [ ] No page zoom, scrolling, text selection or long-press menu while playing.
 - [ ] A second phone shows the "wait for your turn" screen, and takes over after the first phone closes the page.
 - [ ] Lock the first phone for a few seconds, then unlock: it reconnects and still controls the tour.
 - [ ] The football `/controller` still works as before.
 
-Debug helper: add `?timer=1` to the `/tour` URL to keep the tour running in a background tab. In development builds the active tour is available as `window.__tour`.
+Debug helper: add `?timer=1` to the `/tour` URL to keep the tour running in a background tab. In development builds the active tour is available as `window.__tour` and the room (seat, sticks) as `window.__tourHost`.
 
 ---
 

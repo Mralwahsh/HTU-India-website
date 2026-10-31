@@ -5,7 +5,8 @@ import { FootballClient } from '../game/net/FootballClient.js'
 import { CHARACTERS, SLOT_COLOR, SLOT_LABEL_AR } from '../game/football/characters/index.js'
 import { headDataUrl } from '../game/football/characters/art.js'
 import RealtimeDebug from '../components/RealtimeDebug.jsx'
-import { normalizeRoomCode, prettyRoomCode, roomCodeFromUrl } from '../realtime/roomCode.js'
+import { RoomCodeEntry, RoomStatusScreen } from '../components/RoomScreens.jsx'
+import { roomCodeFromUrl } from '../realtime/roomCode.js'
 
 // A saved id so a phone that drops (screen lock, signal hiccup, reload) gets its slot back.
 // Not crypto.randomUUID(): that only exists on HTTPS pages, and local testing over the LAN is plain HTTP.
@@ -37,7 +38,7 @@ const PHASE_TEXT = {
 export default function ControllerPage() {
   const [code, setCode] = useState(roomCodeFromUrl)
   // a new code (typed, or the laptop moved on) remounts the controller with fresh state
-  return code ? <Controller key={code} code={code} onNewCode={setCode} /> : <CodeEntry onCode={setCode} />
+  return code ? <Controller key={code} code={code} onNewCode={setCode} /> : <RoomCodeEntry title="يد التحكم: كرة الرؤوس الكبيرة" emoji="⚽📱" onCode={setCode} />
 }
 
 function Controller({ code, onNewCode }) {
@@ -250,69 +251,11 @@ const STATUS_TEXT = {
 /** Full-screen messages (joining, full, old code, replaced). */
 function StatusScreen({ status, code, onRejoin, onTypeCode }) {
   const [title, text] = STATUS_TEXT[status] ?? STATUS_TEXT.connecting
-  return (
-    // above the "turn your phone" hint, except while simply connecting
-    <div className={`absolute inset-0 grid place-items-center bg-[#0b0f3a]/95 p-6 text-center ${status === 'connecting' ? '' : 'z-10'}`} dir="rtl">
-      <div className="max-w-xl">
-        <p className="text-3xl font-extrabold">{title}</p>
-        {text && <p className="mt-2 text-lg text-white/75">{text}</p>}
-        <p className="mt-3 text-base text-white/50">
-          رمز الغرفة:{' '}
-          <bdi className="font-mono font-bold text-white/80" dir="ltr">
-            {prettyRoomCode(code)}
-          </bdi>
-        </p>
-        <div className="mt-5 flex flex-wrap justify-center gap-3">
-          {status === 'replaced' && (
-            <button type="button" onClick={onRejoin} className="rounded-full bg-[#ff9933] px-6 py-2 text-xl font-extrabold text-[#0b0f3a]">
-              حاول مجددًا
-            </button>
-          )}
-          {(status === 'no-screen' || status === 'closed') && (
-            <button type="button" onClick={onTypeCode} className="rounded-full bg-white/15 px-6 py-2 text-xl font-bold">
-              اكتب رمز الغرفة
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/** No room code in the address: type the one shown on the laptop (or scan its QR again). */
-function CodeEntry({ onCode }) {
-  const [text, setText] = useState('')
-  const code = normalizeRoomCode(text)
-  const submit = (e) => {
-    e.preventDefault()
-    if (code) onCode(code)
-  }
-  return (
-    <div className="fixed inset-0 grid place-items-center overflow-auto bg-[#0b0f3a] p-6 text-center text-white" dir="rtl">
-      <form onSubmit={submit} className="w-full max-w-md">
-        <p className="text-6xl">⚽📱</p>
-        <h1 className="mt-3 text-3xl font-extrabold">يد التحكم: كرة الرؤوس الكبيرة</h1>
-        <p className="mt-2 text-lg text-white/75">امسح الرمز الظاهر على الشاشة بكاميرا هاتفك، أو اكتب رمز الغرفة (6 أحرف):</p>
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          dir="ltr"
-          inputMode="text"
-          autoCapitalize="characters"
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          maxLength={9}
-          placeholder="K7Q M2X"
-          aria-label="رمز الغرفة"
-          className="mt-5 w-full rounded-2xl bg-white px-4 py-3 text-center font-mono text-4xl font-extrabold tracking-[0.25em] text-[#0b0f3a] uppercase select-text placeholder:text-[#0b0f3a]/25"
-        />
-        <button type="submit" disabled={!code} className="mt-4 w-full rounded-2xl bg-[#ff9933] py-3 text-2xl font-extrabold text-[#0b0f3a] disabled:opacity-40">
-          دخول
-        </button>
-      </form>
-    </div>
-  )
+  const actions = []
+  if (status === 'replaced') actions.push({ label: 'حاول مجددًا', onClick: onRejoin, primary: true })
+  if (status === 'no-screen' || status === 'closed') actions.push({ label: 'اكتب رمز الغرفة', onClick: onTypeCode })
+  // above the "turn your phone" hint, except while simply connecting
+  return <RoomStatusScreen title={title} text={text} code={code} actions={actions} onTop={status !== 'connecting'} />
 }
 
 /** Character carousel: tap the arrows or swipe. */

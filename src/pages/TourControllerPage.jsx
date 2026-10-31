@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Info, Map as MapIcon, SkipForward, ZoomIn, ZoomOut } from 'lucide-react'
-import { TEV } from '../../shared/tourProtocol.js'
-import { STICKS } from '../tour/config.js'
-import { connectTourSocket, tourPing } from '../tour/net.js'
+import { TourClient } from '../tour/net/TourClient.js'
 import VirtualStick from '../components/tour/VirtualStick.jsx'
+import RealtimeDebug from '../components/RealtimeDebug.jsx'
+import { RoomCodeEntry, RoomStatusScreen } from '../components/RoomScreens.jsx'
+import { roomCodeFromUrl } from '../realtime/roomCode.js'
 
 // Separate id from the football controller, so the two never mix.
 function clientId() {
@@ -28,72 +29,52 @@ const vibrate = (pattern) => {
   }
 }
 
-/** Phone controller for virtual tours: /tour-controller. Two sticks + buttons, landscape. */
+/**
+ * Phone controller for virtual tours: /tour-controller?room=K7QM2X (the QR on the tour screen).
+ * Two sticks + buttons, landscape. Without a room code in the address the visitor can type it.
+ */
 export default function TourControllerPage() {
-  const socketRef = useRef(null)
-  const [status, setStatus] = useState('connecting') // connecting | connected | reconnecting | error
-  const [controlling, setControlling] = useState(false)
-  const [tour, setTour] = useState({ mode: 'map', placeName: null })
-  const [ping, setPing] = useState(null)
-  const sticks = useRef({ move: { x: 0, y: 0, active: false, sentZero: true }, look: { x: 0, y: 0, active: false, sentZero: true } })
+  const [code, setCode] = useState(roomCodeFromUrl)
+  // a new code (typed, or the laptop moved on) remounts the controller with fresh state
+  return code ? <TourController key={code} code={code} onNewCode={setCode} /> : <RoomCodeEntry title="يد التحكم: الجولات الافتراضية" emoji="🧭📱" onCode={setCode} />
+}
 
-  // ---------------------------------------------------------- socket
+function TourController({ code, onNewCode }) {
+  const clientRef = useRef(null)
+  const [net, setNet] = useState({ status: 'connecting', controlling: false, tour: { mode: 'map', placeName: null }, rtt: null })
+  const { status, controlling, tour, rtt: ping } = net
+  const debugTap = useRef(null)
+
+  // ---------------------------------------------------------- room (Supabase Realtime)
   useEffect(() => {
-    const id = clientId()
-    const socket = connectTourSocket()
-    socketRef.current = socket
-    const join = () =>
-      socket.emit(TEV.JOIN, { clientId: id }, (res) => {
-        if (!res?.ok) return setStatus('error')
-        setStatus('connected')
-        setControlling(res.controlling)
-        if (res.state) setTour(res.state)
-      })
-    socket.on('connect', join)
-    socket.on('disconnect', () => setStatus('reconnecting'))
-    socket.io.on('reconnect_attempt', () => setStatus('reconnecting'))
-    socket.on(TEV.CONTROLLER_STATUS, ({ connected, controlling: me }) => {
-      setControlling(!!me)
-      if (!connected && !me) join() // the seat is free → try to take it
+    const client = new TourClient({
+      code,
+      clientId: clientId(),
+      onChange: setNet,
+      onFeedback: (type) => vibrate(type === 'stepped' ? 35 : [45, 70, 45]),
     })
-    socket.on(TEV.STATE, setTour)
-    socket.on(TEV.FEEDBACK, ({ type }) => vibrate(type === 'stepped' ? 35 : [45, 70, 45]))
-    const pingTimer = setInterval(async () => {
-      if (socket.connected) {
-        const ms = await tourPing(socket)
-        if (ms != null) setPing(Math.round(ms))
-      }
-    }, 2000)
+    clientRef.current = client
     return () => {
-      clearInterval(pingTimer)
-      socket.disconnect()
+      client.destroy()
+      clientRef.current = null
     }
-  }, [])
+  }, [code])
 
-  // ---------------------------------------------------------- sticks: ~30 Hz while touched, final {0,0} on release
+  // keep the address in sync, so a reload rejoins the same room
   useEffect(() => {
-    const t = setInterval(() => {
-      for (const [stick, s] of Object.entries(sticks.current)) {
-        if (s.active) socketRef.current?.emit(TEV.STICK, { stick, x: +s.x.toFixed(3), y: +s.y.toFixed(3) })
-      }
-    }, 1000 / STICKS.sendHz)
-    return () => clearInterval(t)
-  }, [])
-
-  const stickMove = (stick) => (x, y) => {
-    Object.assign(sticks.current[stick], { x, y, active: true })
-  }
-  const stickRelease = (stick) => () => {
-    Object.assign(sticks.current[stick], { x: 0, y: 0, active: false })
-    socketRef.current?.emit(TEV.STICK, { stick, x: 0, y: 0 })
-  }
-
-  const releaseAll = useCallback(() => {
-    for (const stick of ['move', 'look']) {
-      if (sticks.current[stick].active) stickRelease(stick)()
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('room') !== code) {
+      url.searchParams.set('room', code)
+      window.history.replaceState(null, '', url)
     }
-    socketRef.current?.emit(TEV.ZOOM, { dir: 'in', pressed: false })
-  }, [])
+  }, [code])
+
+  // ---------------------------------------------------------- sticks and buttons → laptop (TourClient limits the rate)
+  const stickMove = (stick) => (x, y) => clientRef.current?.setStick(stick, x, y)
+  const stickRelease = (stick) => () => clientRef.current?.setStick(stick, 0, 0)
+  const releaseAll = useCallback(() => clientRef.current?.releaseAll(), [])
+  const act = (a) => () => clientRef.current?.action(a)
+  const zoom = (dir) => (pressed) => clientRef.current?.setZoom(pressed ? dir : 0)
 
   // background / lock screen: release everything
   useEffect(() => {
@@ -123,7 +104,6 @@ export default function TourControllerPage() {
     }
   }, [])
 
-  const send = (ev, data = {}) => socketRef.current?.emit(ev, data)
   const onMap = tour.mode !== 'tour'
 
   return (
@@ -136,10 +116,11 @@ export default function TourControllerPage() {
       >
         <span className="rounded-full bg-saffron px-3 py-0.5 text-base font-extrabold text-[#0b0f3a]">🧭 جولة</span>
         <span className="truncate font-display text-[4.2vh] font-extrabold">{onMap ? 'اختر مكانًا على الخريطة' : tour.placeName}</span>
-        <span className="flex items-center gap-2 text-sm">
+        {/* tap three times: developer overlay (messages per second, round trip) */}
+        <button type="button" onClick={() => debugTap.current?.()} className="flex items-center gap-2 text-sm">
           <span className={`h-3 w-3 rounded-full ${status === 'connected' ? 'bg-[#2ecc40]' : 'animate-pulse bg-[#ffb000]'}`} />
           <span className="text-white/70">{status === 'connected' ? `${ping ?? '–'} ms` : 'إعادة الاتصال…'}</span>
-        </span>
+        </button>
       </header>
 
       <main
@@ -150,21 +131,21 @@ export default function TourControllerPage() {
 
         <div className="flex flex-col items-center justify-end gap-[3vh] pb-[6vh]">
           <div className="flex gap-[2.5vw]">
-            <RoundButton label="معلومات" color="#000080" onTap={() => send(TEV.INFO)}>
+            <RoundButton label="معلومات" color="#000080" onTap={act('info')}>
               <Info size="5.5vh" />
             </RoundButton>
-            <RoundButton label="المكان التالي" color="#138808" onTap={() => send(TEV.NEXT)}>
+            <RoundButton label="المكان التالي" color="#138808" onTap={act('next')}>
               <SkipForward size="5.5vh" />
             </RoundButton>
-            <RoundButton label="الخريطة" color="#e5560c" onTap={() => send(TEV.EXIT)}>
+            <RoundButton label="الخريطة" color="#e5560c" onTap={act('exit')}>
               <MapIcon size="5.5vh" />
             </RoundButton>
           </div>
           <div className="flex gap-[2.5vw]">
-            <RoundButton label="تصغير" color="#3b4bc4" small onHold={(p) => send(TEV.ZOOM, { dir: 'out', pressed: p })}>
+            <RoundButton label="تصغير" color="#3b4bc4" small onHold={zoom(-1)}>
               <ZoomOut size="4.5vh" />
             </RoundButton>
-            <RoundButton label="تكبير" color="#3b4bc4" small onHold={(p) => send(TEV.ZOOM, { dir: 'in', pressed: p })}>
+            <RoundButton label="تكبير" color="#3b4bc4" small onHold={zoom(1)}>
               <ZoomIn size="4.5vh" />
             </RoundButton>
           </div>
@@ -175,19 +156,29 @@ export default function TourControllerPage() {
 
       {/* someone else has the controls */}
       {status === 'connected' && !controlling && (
-        <div className="absolute inset-0 grid place-items-center bg-[#0b0f3a]/95 p-8 text-center" dir="rtl">
-          <div>
-            <p className="text-6xl">⏳</p>
-            <p className="mt-3 text-[5vh] font-extrabold">شخص آخر يتحكم بالجولة</p>
-            <p className="mt-1 text-[3.5vh] text-white/70">انتظر دورك، ستنتقل إليك تلقائيًا</p>
-          </div>
-        </div>
+        <RoomStatusScreen icon="⏳" title="شخص آخر يتحكم بالجولة" text="انتظر دورك، ستنتقل إليك تلقائيًا" code={code} />
       )}
-      {(status === 'connecting' || status === 'error') && (
-        <div className="absolute inset-0 grid place-items-center bg-[#0b0f3a]/95 text-center" dir="rtl">
-          <p className="text-3xl font-extrabold">{status === 'error' ? 'تعذّر الاتصال' : 'جارٍ الاتصال…'}</p>
-        </div>
+      {status === 'connecting' && <RoomStatusScreen title="جارٍ الاتصال…" code={code} />}
+      {status === 'no-screen' && (
+        <RoomStatusScreen
+          title="لا تجد الشاشة هذه الغرفة"
+          text="ربما تغيّر الرمز. امسح الرمز الظاهر على شاشة الجولات الآن، أو اكتب رمز الغرفة."
+          code={code}
+          actions={[{ label: 'اكتب رمز الغرفة', onClick: () => onNewCode(null) }]}
+          onTop
+        />
       )}
+      {status === 'closed' && (
+        <RoomStatusScreen
+          title="انتهت هذه الجولة"
+          text="الشاشة تعرض رمزًا جديدًا. امسحه لتتحكم بالجولة."
+          code={code}
+          actions={[{ label: 'اكتب رمز الغرفة', onClick: () => onNewCode(null) }]}
+          onTop
+        />
+      )}
+
+      <RealtimeDebug toggleRef={debugTap} />
 
       <div className="rotate-hint absolute inset-0 bg-[#0b0f3a] p-8 text-center" dir="rtl">
         <div>

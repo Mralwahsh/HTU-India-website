@@ -40,7 +40,7 @@ A guide stands next to the laptop and walks each visitor through it in 1–2 min
 | 🗺️ **Map** | India's 36 states and union territories coloured by language family, with neighbouring countries in gray. Hover a state for "Hello" in its language; click it to see **the visitor's own name in that state's script** (Telugu, Gujarati, Tibetan, Meitei Mayek…). |
 | 🎮 **Game** | "Guess the Script": 5 quick rounds; pick which of four words is written in, say, Tamil. Speed bonus and today's high score. |
 | 🥋 **India Fighters** | A side-view fighting game on the laptop, **controlled with the visitor's own phone** (no app: scan a QR code, the phone becomes a gamepad). Two original fighters, Veer and Tara, fight in a palace courtyard at sunset: best of 3, special moves, a beatable CPU opponent, and the phone vibrates when you get hit. |
-| 🧭 **Virtual tours** | Walk through real **360° photos** of **Sanchi Stupa** (around all four gates), the **Gateway of India**, the **Ajanta** and **Ellora** caves, **Hyderabad** from the sky and the **Udayagiri Caves**. The visitor's phone becomes a two-stick gamepad: walk with the left stick, look around with the right, plus zoom, facts and next place. Works offline; optional Google Street View. |
+| 🧭 **Virtual tours** | Walk through real **360° photos** of **Sanchi Stupa** (around all four gates), the **Gateway of India**, the **Ajanta** and **Ellora** caves, **Hyderabad** from the sky and the **Udayagiri Caves**. The visitor's phone becomes a two-stick gamepad: walk with the left stick, look around with the right, plus zoom, facts and next place (one phone at a time; others wait their turn). Free 360° photos; optional Google Street View. |
 | 🎹 **Raga Tiles** | A piano-tiles game played on visitors' **own phones** (the laptop only shows a QR code at `/tiles-qr`). Synthesized piano, rangoli-style tiles, Easy / Normal, best scores per phone. Songs come from MIDI files (`npm run song`); the National Anthem plays in a respectful mode that can never be interrupted. The phone page is a separate ~110 KB bundle that works offline once loaded. |
 | ♟️ **India & Chess** | Chess was born in India: a countdown to Gukesh's title match, Chaturanga pieces that morph into today's pieces (Sanskrit / Arabic / English names), the journey to Persia, the Arab world and Europe, and a **15-level Puzzle Challenge** for laptop or phone (QR code), with lives, a "Grandmaster!" ending and today's leaderboard. Every puzzle is machine-verified at build time. |
 | 💤 **Attract mode** | After 30 s without input, a full-screen Indian-flag loop says "Hello" in many Indian scripts until someone touches the laptop. |
@@ -50,8 +50,8 @@ A guide stands next to the laptop and walks each visitor through it in 1–2 min
 You need [Node.js](https://nodejs.org/) 20.19 or newer (22 LTS recommended).
 
 ```bash
-git clone https://github.com/Mralwahsh/Indian-languages-website.git
-cd Indian-languages-website
+git clone https://github.com/Mralwahsh/HTU-India-website.git
+cd HTU-India-website
 npm install
 copy .env.example .env.local   # then fill in the Supabase keys (optional for a first look)
 npm run dev                    # http://localhost:5173
@@ -156,7 +156,7 @@ public/
   data/          india_states.topojson (state borders), neighbors.topojson (gray countries)
   fonts/         Noto .ttf files, used by CSS and by HarfBuzz
 src/
-  tour/          virtual tours: places, config (feel), providers (offline photos / Google Street View), stick → step logic
+  tour/          virtual tours: places, config (feel), providers (offline photos / Google Street View), stick → step logic, net/ (room over Supabase Realtime)
   pages/         HomePage, MapPage, NamePage, GamePage, FightPage (laptop), ControllerPage (phone)
   components/    TopBar, AttractMode, GlyphText, LetterBreakdown, StatePanel, fight/ (lobby, stage, QR)…
   game/
@@ -238,5 +238,3 @@ The code is ready for AI spellings (**Supabase Edge Function + OpenRouter**):
 Made with 🧡🤍💚 by the India team · HTU International Week
 
 </div>
-#   H T U - I n d i a - w e b s i t e  
- 

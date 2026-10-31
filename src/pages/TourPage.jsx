@@ -1,25 +1,27 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { TEV } from '../../shared/tourProtocol.js'
+import { ArrowRight } from 'lucide-react'
 import { KEYS } from '../tour/config.js'
 import { TOUR_PLACES, creditLine } from '../tour/places.js'
-import { connectTourSocket } from '../tour/net.js'
+import { TourHost } from '../tour/net/TourHost.js'
 import { MoveInterpreter } from '../tour/moveInterpreter.js'
 import QrCode from '../components/football/QrCode.jsx'
 import TourMap from '../components/tour/TourMap.jsx'
+import RealtimeDebug from '../components/RealtimeDebug.jsx'
 import { pageUrl, SCAN_HINT } from '../config/site.js'
+import { prettyRoomCode } from '../realtime/roomCode.js'
 
 /**
  * Virtual tours on the laptop: map of places → 360° tour.
- * Driven by the phone (/tour-controller, own socket namespace) or the keyboard:
- * WASD move · arrows look · +/− zoom · I info · N next place · Esc back to the map.
+ * Driven by the phone (/tour-controller?room=CODE, through Supabase Realtime) or the keyboard:
+ * WASD move · arrows look · +/− zoom · I info · N next place · M back to the map.
  */
 export default function TourPage() {
-  const socketRef = useRef(null)
-  const hostRef = useRef(null)
+  const roomRef = useRef(null) // TourHost: room code + realtime channels
+  const hostRef = useRef(null) // the element the 360° viewer renders into
   const providerRef = useRef(null)
-  const [serverOk, setServerOk] = useState(null)
-  const [phone, setPhone] = useState(false)
+  const [net, setNet] = useState({ code: null, status: 'connecting', phone: false, rtt: null })
+  const phone = net.phone
   const [mode, setMode] = useState('map') // map | loading | tour
   const [selected, setSelected] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
@@ -32,7 +34,7 @@ export default function TourPage() {
   })
 
   const place = TOUR_PLACES[selected]
-  const controllerUrl = pageUrl('/tour-controller')
+  const controllerUrl = net.code ? pageUrl(`/tour-controller?room=${net.code}`) : null
 
   // ------------------------------------------------------------ provider lifecycle
   const enterTour = useCallback(async (index) => {
@@ -93,7 +95,7 @@ export default function TourPage() {
       const p = providerRef.current
       if (live.current.mode !== 'tour' || !p) return
       const ok = await p.step(dir)
-      socketRef.current?.emit(TEV.FEEDBACK, { type: ok ? 'stepped' : 'no-path' })
+      roomRef.current?.feedback(ok ? 'stepped' : 'no-path')
       if (ok) setViewpoint(p.viewpointName?.() ?? null)
       else say('لا يوجد طريق في هذا الاتجاه')
     }
@@ -116,27 +118,22 @@ export default function TourPage() {
   const handleZoom = useCallback(({ dir, pressed }) => providerRef.current?.setZoomVelocity(pressed ? (dir === 'out' ? -1 : 1) : 0), [])
   const toggleInfo = useCallback(() => setShowInfo((v) => !v), [])
 
-  // ------------------------------------------------------------ socket (tour namespace)
+  // ------------------------------------------------------------ room (Supabase Realtime)
+  // the handlers are stable (useCallback with no changing deps), so the room and its code live as long as the page
   useEffect(() => {
-    const socket = connectTourSocket()
-    socketRef.current = socket
-    socket.on('connect', () => {
-      setServerOk(true)
-      socket.emit(TEV.SCREEN_JOIN, (s) => setPhone(!!s?.connected))
-    })
-    socket.on('connect_error', () => setServerOk(false))
-    socket.on(TEV.CONTROLLER_STATUS, ({ connected }) => setPhone(!!connected))
-    socket.on(TEV.STICK, handleStick)
-    socket.on(TEV.ZOOM, handleZoom)
-    socket.on(TEV.INFO, toggleInfo)
-    socket.on(TEV.NEXT, nextPlace)
-    socket.on(TEV.EXIT, exitTour)
-    return () => socket.disconnect()
+    const actions = { info: toggleInfo, next: nextPlace, exit: exitTour }
+    const room = new TourHost({ onChange: setNet, onStick: handleStick, onZoom: handleZoom, onAction: (a) => actions[a]?.() })
+    roomRef.current = room
+    if (import.meta.env.DEV) window.__tourHost = room // debugging aid
+    return () => {
+      room.destroy()
+      roomRef.current = null
+    }
   }, [handleStick, handleZoom, toggleInfo, nextPlace, exitTour])
 
   // tell the phone where we are (shown at the top of the controller)
   useEffect(() => {
-    socketRef.current?.emit(TEV.STATE, { mode: mode === 'map' ? 'map' : 'tour', placeId: place.id, placeName: place.nameAr })
+    roomRef.current?.setState({ mode: mode === 'map' ? 'map' : 'tour', placeId: place.id, placeName: place.nameAr })
   }, [mode, place, phone])
 
   // ------------------------------------------------------------ keyboard fallback
@@ -166,6 +163,7 @@ export default function TourPage() {
       else if (KEYS.zoomOut.includes(c)) providerRef.current?.setZoomVelocity(-1)
       else if (KEYS.info.includes(c)) toggleInfo()
       else if (KEYS.next.includes(c)) nextPlace()
+      else if (KEYS.map.includes(c) && live.current.mode === 'tour') exitTour()
     }
     const onUp = (e) => {
       const c = e.code
@@ -182,7 +180,7 @@ export default function TourPage() {
       window.removeEventListener('keydown', onDown)
       window.removeEventListener('keyup', onUp)
     }
-  }, [toggleInfo, nextPlace])
+  }, [toggleInfo, nextPlace, exitTour])
 
   // ------------------------------------------------------------ render
   const inTour = mode !== 'map'
@@ -197,7 +195,8 @@ export default function TourPage() {
           setSelected={setSelected}
           onEnter={enterTour}
           controllerUrl={controllerUrl}
-          serverOk={serverOk}
+          code={net.code}
+          status={net.status}
           phone={phone}
           showInfo={showInfo}
         />
@@ -205,12 +204,26 @@ export default function TourPage() {
 
       {inTour && (
         <>
-          <div className="pointer-events-none absolute start-6 top-5 rounded-3xl bg-navy/80 px-6 py-3 text-white shadow-lg backdrop-blur">
-            <p className="font-display text-4xl leading-tight font-extrabold">{place.nameAr}</p>
-            <p className="text-xl text-white/80">
-              {place.cityAr}
-              {viewpoint ? ` · ${viewpoint}` : ''}
-            </p>
+          <div className="absolute start-6 top-5 flex flex-col items-start gap-3">
+            <div className="pointer-events-none rounded-3xl bg-navy/80 px-6 py-3 text-white shadow-lg backdrop-blur">
+              <p className="font-display text-4xl leading-tight font-extrabold">{place.nameAr}</p>
+              <p className="text-xl text-white/80">
+                {place.cityAr}
+                {viewpoint ? ` · ${viewpoint}` : ''}
+              </p>
+            </div>
+            {/* back to the map of places, without leaving the page (the phone stays connected) */}
+            {mode === 'tour' && (
+              <button
+                type="button"
+                onClick={exitTour}
+                className="flex items-center gap-2 rounded-full bg-saffron px-5 py-2.5 text-xl font-extrabold text-navy shadow-lg transition-colors hover:bg-saffron-deep hover:text-white"
+                title="الخريطة (M)"
+              >
+                <ArrowRight size={24} strokeWidth={2.6} />
+                كل الأماكن
+              </button>
+            )}
           </div>
           <div className="pointer-events-none absolute end-6 top-5 flex items-center gap-2 rounded-full bg-black/45 px-4 py-2 text-lg font-bold text-white">
             <span className={`h-3 w-3 rounded-full ${phone ? 'bg-[#2ecc40]' : 'bg-white/40'}`} />
@@ -244,11 +257,12 @@ export default function TourPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      <RealtimeDebug />
     </div>
   )
 }
 
-function MapScreen({ selected, setSelected, onEnter, controllerUrl, serverOk, phone, showInfo }) {
+function MapScreen({ selected, setSelected, onEnter, controllerUrl, code, status, phone, showInfo }) {
   const p = TOUR_PLACES[selected]
   const startNode = p.offline?.nodes?.find((n) => n.id === p.offline.start)
   const preview = startNode?.file
@@ -290,24 +304,28 @@ function MapScreen({ selected, setSelected, onEnter, controllerUrl, serverOk, ph
         </motion.button>
 
         <div className="mt-4 flex items-center gap-5 rounded-3xl bg-paper p-4 shadow-sm ring-1 ring-ink/5">
-          {serverOk === false ? (
-            <p className="text-xl font-bold text-accent">الخادم غير متصل: شغّل npm start</p>
-          ) : (
-            <>
-              {controllerUrl && <QrCode text={controllerUrl} size={150} />}
-              <div className="min-w-0">
-                <p className="font-display text-2xl font-extrabold text-navy">امسح للتحكم بالجولة</p>
-                <p className="text-base font-bold text-ink/80">📱 {SCAN_HINT}</p>
-                <p className="font-mono text-base text-muted" dir="ltr">
-                  {controllerUrl}
-                </p>
-                <p className={`mt-1 text-lg font-bold ${phone ? 'text-green' : 'text-muted'}`}>{phone ? '✅ الهاتف متصل' : 'بانتظار هاتف…'}</p>
-                <p className="text-sm text-muted" dir="ltr">
-                  Keyboard: A/D choose · W enter · arrows look · +/− zoom · I info · N next · Esc map
-                </p>
+          <div className="relative shrink-0">
+            {controllerUrl ? <QrCode text={controllerUrl} size={150} /> : <div className="h-[150px] w-[150px] animate-pulse rounded-2xl bg-ink/5" />}
+            {status !== 'live' && (
+              <div className="absolute inset-0 grid place-items-center rounded-2xl bg-paper/85 p-2 text-center">
+                <p className="text-base font-bold text-navy">{status === 'reconnecting' ? 'انقطع الاتصال… جارٍ إعادة الاتصال' : 'جارٍ الاتصال…'}</p>
               </div>
-            </>
-          )}
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-2xl font-extrabold text-navy">امسح للتحكم بالجولة</p>
+            <p className="text-base font-bold text-ink/80">📱 {SCAN_HINT}</p>
+            <p className="mt-1 text-lg">
+              رمز الغرفة:{' '}
+              <bdi className="font-mono text-2xl font-extrabold tracking-[0.15em] text-saffron-deep" dir="ltr">
+                {prettyRoomCode(code)}
+              </bdi>
+            </p>
+            <p className={`text-lg font-bold ${phone ? 'text-green' : 'text-muted'}`}>{phone ? '✅ الهاتف متصل' : 'بانتظار هاتف…'}</p>
+            <p className="text-sm text-muted" dir="ltr">
+              Keyboard: A/D choose · W enter · arrows look · +/− zoom · I info · N next · M map
+            </p>
+          </div>
         </div>
       </section>
 

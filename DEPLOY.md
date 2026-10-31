@@ -15,6 +15,7 @@ our own any more (the old offline one is kept in [`legacy-local-server/`](legacy
 | Home, map, names, games, chess page | Vercel (static) | only to load the page |
 | Raga Tiles `/tiles`, Puzzle Challenge `/chess/puzzles` | the visitor's phone | only to load the page |
 | Big Head Football `/football` + phone `/controller` | laptop + phones, through Supabase Realtime | yes, during the match |
+| Virtual tours `/tour` + phone `/tour-controller` | laptop + one phone, through Supabase Realtime (the 360° photos are part of the site) | yes, while a phone controls it |
 
 ---
 

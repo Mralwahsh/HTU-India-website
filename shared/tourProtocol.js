@@ -1,5 +1,5 @@
-// Socket.IO protocol for virtual tours. Separate namespace from the football game,
-// so tour events can never interfere with a match.
+// Socket.IO protocol for virtual tours: only used by legacy-local-server/ now.
+// The web version's tour messages are described in src/tour/net/tourProtocol.js.
 
 export const TOUR_NAMESPACE = '/tour'
 
