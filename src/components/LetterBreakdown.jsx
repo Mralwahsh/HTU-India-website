@@ -52,14 +52,14 @@ export default function LetterBreakdown({ config, text, onClose }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-8 backdrop-blur-sm"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-2 backdrop-blur-sm lg:p-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
       <motion.div
-        className="flex h-full max-h-[900px] w-full max-w-[1500px] flex-col rounded-[2.5rem] bg-cream px-8 py-6 shadow-2xl"
+        className="flex h-full max-h-[900px] w-full max-w-[1500px] flex-col overflow-y-auto rounded-[1.6rem] bg-cream px-4 py-4 shadow-2xl lg:overflow-visible lg:rounded-[2.5rem] lg:px-8 lg:py-6"
         initial={{ y: 40, scale: 0.97 }}
         animate={{ y: 0, scale: 1 }}
         exit={{ y: 30, opacity: 0 }}
@@ -69,12 +69,12 @@ export default function LetterBreakdown({ config, text, onClose }) {
         {/* header */}
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xl font-semibold" style={{ color: config.accent }}>
+            <p className="text-base font-semibold lg:text-xl" style={{ color: config.accent }}>
               {config.language} · خط {config.scriptName}
             </p>
-            <h2 className="font-display text-4xl font-extrabold">كيف يُبنى اسمك؟</h2>
+            <h2 className="font-display text-2xl font-extrabold lg:text-4xl">كيف يُبنى اسمك؟</h2>
           </div>
-          <button onClick={onClose} className="grid h-14 w-14 place-items-center rounded-full bg-ink/5 hover:bg-ink/10">
+          <button onClick={onClose} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink/5 hover:bg-ink/10 lg:h-14 lg:w-14">
             <X size={30} />
           </button>
         </div>
@@ -89,27 +89,27 @@ export default function LetterBreakdown({ config, text, onClose }) {
                 if (isUrdu) setPaused(true)
               }}
               whileTap={{ scale: 0.94 }}
-              className={`${scriptFont(script)} min-w-24 rounded-2xl px-5 font-bold transition ${
+              className={`${scriptFont(script)} min-w-14 rounded-2xl px-3 font-bold transition lg:min-w-24 lg:px-5 ${
                 i === blockIdx ? 'bg-paper shadow-lg ring-4' : 'bg-ink/5 text-ink/60 hover:bg-ink/10'
-              } ${isUrdu ? 'py-0 text-5xl' : 'py-1 text-5xl 2xl:text-6xl'}`}
+              } ${isUrdu ? 'py-0 text-3xl lg:text-5xl' : 'py-1 text-3xl lg:text-5xl 2xl:text-6xl'}`}
               style={i === blockIdx ? { '--tw-ring-color': config.accent, color: config.accent } : undefined}
             >
               {b.text}
             </motion.button>
           ))}
         </div>
-        <p className="mt-2 text-center text-lg text-muted">
+        <p className="mt-2 text-center text-base text-muted lg:text-lg">
           {isUrdu ? 'اضغط على حرف' : 'اضغط على مقطع: كل مقطع صوتٌ واحد'}
         </p>
 
         {/* detail */}
-        <div className="mt-3 grid min-h-0 flex-1 grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] gap-6">
-          <div className="grid place-items-center rounded-[2rem] bg-paper p-6 ring-1 ring-ink/5">
+        <div className="mt-3 flex flex-col gap-4 lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] lg:gap-6">
+          <div className="grid place-items-center rounded-[2rem] bg-paper p-4 ring-1 ring-ink/5 lg:p-6">
             <GlyphText
               key={`${blockIdx}-${isUrdu}`}
               text={isUrdu ? text : block.text}
               script={script}
-              height={isUrdu ? 200 : 260}
+              height={isUrdu ? 200 : 260} // shrinks to the box width on phones
               color="#10123a"
               highlight={highlight}
               highlightColor={activeColor}
@@ -122,7 +122,7 @@ export default function LetterBreakdown({ config, text, onClose }) {
             <div className="flex flex-wrap items-center gap-2" dir={isUrdu ? 'rtl' : 'ltr'}>
               {block.parts.map((p, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  {i > 0 && <span className="text-3xl font-bold text-ink/30">+</span>}
+                  {i > 0 && <span className="text-2xl font-bold text-ink/30 lg:text-3xl">+</span>}
                   <button
                     onMouseEnter={() => {
                       setPaused(true)
@@ -132,39 +132,39 @@ export default function LetterBreakdown({ config, text, onClose }) {
                       setPaused(true)
                       setPartIdx(i)
                     }}
-                    className={`flex min-w-20 flex-col items-center rounded-2xl px-3 py-1.5 transition ${
+                    className={`flex min-w-14 flex-col items-center rounded-2xl px-2 py-1.5 transition lg:min-w-20 lg:px-3 ${
                       partIdx === i ? 'scale-105 bg-paper shadow-lg' : 'bg-ink/5'
                     }`}
                     style={partIdx === i ? { boxShadow: `0 0 0 4px ${PART_COLORS[i % PART_COLORS.length]}` } : undefined}
                   >
                     <span
-                      className={`${scriptFont(script)} font-bold ${isUrdu ? 'text-5xl leading-[1.8]' : 'text-5xl leading-[1.4]'}`}
+                      className={`${scriptFont(script)} font-bold ${isUrdu ? 'text-3xl leading-[1.8] lg:text-5xl' : 'text-3xl leading-[1.4] lg:text-5xl'}`}
                       style={{ color: PART_COLORS[i % PART_COLORS.length] }}
                     >
                       {isMark(p.kind) ? `◌${p.ch}` : p.ch}
                     </span>
-                    <span className="text-2xl font-bold">{p.sound || '—'}</span>
+                    <span className="text-lg font-bold lg:text-2xl">{p.sound || '—'}</span>
                     <span className="text-sm text-muted">{p.label}</span>
                   </button>
                 </div>
               ))}
               {!isUrdu && (
                 <>
-                  <span className="text-3xl font-bold text-ink/30">=</span>
+                  <span className="text-2xl font-bold text-ink/30 lg:text-3xl">=</span>
                   <button
                     onMouseEnter={() => {
                       setPaused(true)
                       setPartIdx(block.parts.length)
                     }}
-                    className={`flex min-w-20 flex-col items-center rounded-2xl px-3 py-1.5 transition ${
+                    className={`flex min-w-14 flex-col items-center rounded-2xl px-2 py-1.5 transition lg:min-w-20 lg:px-3 ${
                       !activePart ? 'scale-105 bg-paper shadow-lg' : 'bg-ink/5'
                     }`}
                     style={!activePart ? { boxShadow: `0 0 0 4px ${config.accent}` } : undefined}
                   >
-                    <span className={`${scriptFont(script)} text-5xl leading-[1.4] font-bold`} style={{ color: config.accent }}>
+                    <span className={`${scriptFont(script)} text-3xl leading-[1.4] font-bold lg:text-5xl`} style={{ color: config.accent }}>
                       {block.text}
                     </span>
-                    <span className="text-2xl font-bold">{blockSound(block, script)}</span>
+                    <span className="text-lg font-bold lg:text-2xl">{blockSound(block, script)}</span>
                     <span className="text-sm text-muted">مقطع</span>
                   </button>
                 </>
@@ -175,7 +175,7 @@ export default function LetterBreakdown({ config, text, onClose }) {
             <div className="mt-4 min-h-20">
               <motion.p
                   key={`${blockIdx}-${partIdx}`}
-                  className="rounded-2xl bg-paper px-6 py-3 text-2xl leading-snug font-semibold ring-1 ring-ink/5"
+                  className="rounded-2xl bg-paper px-4 py-3 text-lg leading-snug font-semibold ring-1 ring-ink/5 lg:px-6 lg:text-2xl"
                   initial={{ opacity: 0.3, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
@@ -195,7 +195,7 @@ export default function LetterBreakdown({ config, text, onClose }) {
           </div>
         </div>
 
-        <p className="mt-4 rounded-2xl bg-navy px-6 py-2.5 text-lg font-semibold text-white 2xl:text-xl">💡 {TIPS[script]}</p>
+        <p className="mt-4 rounded-2xl bg-navy px-4 py-2.5 text-base font-semibold text-white lg:px-6 lg:text-lg 2xl:text-xl">💡 {TIPS[script]}</p>
       </motion.div>
     </motion.div>
   )

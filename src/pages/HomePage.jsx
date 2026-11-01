@@ -43,16 +43,16 @@ export default function HomePage() {
   )
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-paper">
+    <div className="flex min-h-full flex-col bg-paper lg:h-full lg:overflow-hidden">
       {/* ---------------------------------------------------------------- top: headline + greeting */}
-      <section className="mx-auto grid min-h-0 w-full max-w-[1800px] flex-[1.05] grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] items-center gap-[3vw] px-[4vw]">
+      <section className="mx-auto grid w-full max-w-[1800px] gap-4 px-5 pt-6 pb-2 lg:min-h-0 lg:flex-[1.05] lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:items-center lg:gap-[3vw] lg:px-[4vw] lg:py-0">
         <div>
-          <h1 className="font-display text-[min(6.8vw,11vh)] leading-[1.12] text-navy">
+          <h1 className="font-display text-[2.6rem] leading-[1.12] text-navy lg:text-[min(6.8vw,11vh)]">
             بلدٌ واحد،
             <br />
             وأصواتٌ كثيرة
           </h1>
-          <p className="mt-[1.6vh] max-w-[46ch] text-[min(1.6vw,2.8vh)] leading-[1.6] text-ink/80">
+          <p className="mt-3 max-w-[46ch] text-lg leading-[1.6] text-ink/80 lg:mt-[1.6vh] lg:text-[min(1.6vw,2.8vh)]">
             في الهند <Num>{STATS.official}</Num> لغة رسمية، وأكثر من <Num>{STATS.major}</Num> لغة رئيسية، و<Num>{STATS.mother}</Num> لغة أُمّ سجّلها
             التعداد. وأوراقها النقدية تكتب قيمتها بـ<Num>{STATS.banknote}</Num> لغة!
           </p>
@@ -64,27 +64,27 @@ export default function HomePage() {
       <WordLine words={words} />
 
       {/* ---------------------------------------------------------------- bottom: green band of activities */}
-      <nav className="shrink-0 bg-green text-white" aria-label="الأنشطة">
-        <div className="mx-auto flex h-[min(17vh,11rem)] w-full max-w-[1800px] items-stretch px-[4vw]">
+      <nav className="mt-6 shrink-0 bg-green text-white lg:mt-0" aria-label="الأنشطة">
+        <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-4 px-5 py-6 lg:h-[min(17vh,11rem)] lg:flex-row lg:items-stretch lg:gap-0 lg:px-[4vw] lg:py-0">
           <Link
             to="/name"
-            className="group my-[2.2vh] flex items-center gap-[1.5vw] rounded-[1.4rem] bg-saffron px-[2.2vw] text-navy shadow-[0_10px_0_#b85c06] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_12px_0_#b85c06] focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-white active:translate-y-2 active:shadow-[0_2px_0_#b85c06]"
+            className="group flex items-center justify-between gap-4 rounded-[1.4rem] bg-saffron px-6 py-4 text-navy shadow-[0_10px_0_#b85c06] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_12px_0_#b85c06] focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-white active:translate-y-2 active:shadow-[0_2px_0_#b85c06] lg:my-[2.2vh] lg:justify-start lg:gap-[1.5vw] lg:px-[2.2vw] lg:py-0"
           >
             <span>
-              <span className="block font-display text-[min(3.4vw,6vh)] leading-[1.15]">اكتب اسمك</span>
-              <span className="block text-[min(1.3vw,2.3vh)] font-bold">وشاهده بخمسة خطوط هندية</span>
+              <span className="block font-display text-[2rem] leading-[1.15] lg:text-[min(3.4vw,6vh)]">اكتب اسمك</span>
+              <span className="block text-base font-bold lg:text-[min(1.3vw,2.3vh)]">وشاهده بخمسة خطوط هندية</span>
             </span>
-            <ArrowLeft className="h-[min(3.4vw,6vh)] w-[min(3.4vw,6vh)] transition-transform group-hover:-translate-x-1" strokeWidth={3} />
+            <ArrowLeft className="h-9 w-9 transition-transform group-hover:-translate-x-1 lg:h-[min(3.4vw,6vh)] lg:w-[min(3.4vw,6vh)]" strokeWidth={3} />
           </Link>
-          <ul className="ms-[2vw] flex flex-1 items-stretch">
+          <ul className="grid grid-cols-2 gap-2 lg:ms-[2vw] lg:flex lg:flex-1 lg:items-stretch lg:gap-0">
             {ACTIVITIES.map((a) => (
-              <li key={a.to} className="flex flex-1 border-s border-white/25">
+              <li key={a.to} className="flex rounded-2xl bg-white/10 lg:flex-1 lg:rounded-none lg:border-s lg:border-white/25 lg:bg-transparent">
                 <Link
                   to={a.to}
-                  className="flex flex-1 flex-col justify-center px-[1.6vw] transition-colors hover:bg-white/10 focus-visible:bg-white/15 focus-visible:outline-none"
+                  className="flex flex-1 flex-col justify-center px-4 py-3 transition-colors hover:bg-white/10 focus-visible:bg-white/15 focus-visible:outline-none lg:px-[1.6vw] lg:py-0"
                 >
-                  <span className="font-display text-[min(2.3vw,4.2vh)] leading-[1.25]">{a.title}</span>
-                  <span className="text-[min(1.1vw,2vh)] leading-snug text-white/80">{a.sub}</span>
+                  <span className="font-display text-xl leading-[1.25] lg:text-[min(2.3vw,4.2vh)]">{a.title}</span>
+                  <span className="text-sm leading-snug text-white/80 lg:text-[min(1.1vw,2vh)]">{a.sub}</span>
                 </Link>
               </li>
             ))}
@@ -120,7 +120,7 @@ function Greeting({ greetings }) {
 
   return (
     <div className="relative flex h-full min-w-0 flex-col items-center justify-center text-center" aria-live="polite" data-fit>
-      <div className="relative grid h-[min(19vw,30vh)] w-full place-items-center">
+      <div className="relative grid h-32 w-full place-items-center lg:h-[min(19vw,30vh)]">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
             key={g.id}
@@ -139,7 +139,7 @@ function Greeting({ greetings }) {
       <AnimatePresence mode="wait" initial={false}>
         <motion.p
           key={g.id}
-          className="text-[min(1.7vw,3vh)] text-ink/75"
+          className="text-base text-ink/75 lg:text-[min(1.7vw,3vh)]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -174,7 +174,7 @@ function FitText({ children, className, lang }) {
     return () => ro.disconnect()
   }, [children])
   return (
-    <span ref={ref} className={`${className} whitespace-nowrap`} style={{ fontSize: `calc(min(9vw, 17vh) * ${scale})`, lineHeight: 1.5 }} lang={lang}>
+    <span ref={ref} className={`${className} whitespace-nowrap`} style={{ fontSize: `calc(var(--hello-size) * ${scale})`, lineHeight: 1.5 }} lang={lang}>
       {children}
     </span>
   )
@@ -189,11 +189,11 @@ function WordLine({ words }) {
   const reduce = useReducedMotion()
 
   return (
-    <section className="relative mx-auto flex min-h-0 w-full max-w-[1800px] flex-1 flex-col justify-center px-[4vw]" aria-label="كلمات هندية تعرفها">
-      <div className="grid grid-cols-[minmax(0,1.9fr)_repeat(6,minmax(0,1fr))] items-stretch">
+    <section className="relative mx-auto flex w-full max-w-[1800px] flex-col justify-center px-5 pt-4 lg:min-h-0 lg:flex-1 lg:px-[4vw] lg:pt-0" aria-label="كلمات هندية تعرفها">
+      <div className="grid grid-cols-6 items-stretch lg:grid-cols-[minmax(0,1.9fr)_repeat(6,minmax(0,1fr))]">
         {/* heading: it is Arabic too, so it sits on the line like the words */}
-        <div className="flex flex-col justify-end pb-[0.9vh]">
-          <h2 className="font-display text-[min(2.9vw,5.2vh)] leading-[1.2] text-navy">
+        <div className="col-span-6 flex flex-col justify-end pb-3 lg:col-span-1 lg:pb-[0.9vh]">
+          <h2 className="font-display text-[1.7rem] leading-[1.2] text-navy lg:text-[min(2.9vw,5.2vh)]">
             أنت تعرف هذه
             <br />
             الكلمات الهندية!
@@ -214,7 +214,7 @@ function WordLine({ words }) {
             transition={{ delay: 0.35 + i * 0.07, type: 'spring', stiffness: 260, damping: 22 }}
             aria-label={`${w.arabic} = ${w.hindi}`}
           >
-            <span className="font-arab text-[min(3.3vw,6vh)] leading-[1.45] font-bold text-green" style={{ marginBottom: SIT }}>
+            <span className="font-arab text-[1.1rem] leading-[1.45] font-bold text-green lg:text-[min(3.3vw,6vh)]" style={{ marginBottom: SIT }}>
               {w.arabic}
             </span>
           </motion.button>
@@ -223,14 +223,14 @@ function WordLine({ words }) {
 
       {/* the line */}
       <motion.div
-        className="h-[min(0.55vw,1vh)] origin-right rounded-full bg-navy"
+        className="h-1 origin-right rounded-full bg-navy lg:h-[min(0.55vw,1vh)]"
         initial={reduce ? false : { scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ duration: 0.7, ease: [0.6, 0, 0.2, 1] }}
       />
 
-      <div className="grid grid-cols-[minmax(0,1.9fr)_repeat(6,minmax(0,1fr))]">
-        <p className="pt-[1.4vh] pe-[1.5vw] text-[min(1.15vw,2.1vh)] leading-[1.6] text-ink/70">
+      <div className="grid grid-cols-6 lg:grid-cols-[minmax(0,1.9fr)_repeat(6,minmax(0,1fr))]">
+        <p className="order-last col-span-6 pt-3 text-base leading-[1.6] text-ink/70 lg:order-none lg:col-span-1 lg:pt-[1.4vh] lg:pe-[1.5vw] lg:text-[min(1.15vw,2.1vh)]">
           حروف الهندية تتدلّى من خطٍّ فوقها، وحروف العربية تجلس على السطر. والكلمة نفسها!
           <span className="mt-[0.5vh] block font-bold text-saffron-deep">المس كلمة لتراها بالأردية.</span>
         </p>
@@ -243,15 +243,15 @@ function WordLine({ words }) {
             transition={{ delay: 0.55 + i * 0.07, type: 'spring', stiffness: 260, damping: 22 }}
           >
             {/* pulled up so the Devanagari headline bar merges into the navy line */}
-            <span className="font-deva text-[min(3.5vw,6.4vh)] leading-none font-bold text-navy" style={{ marginTop: HANG }} lang="hi">
+            <span className="font-deva text-[1.05rem] leading-none font-bold text-navy lg:text-[min(3.5vw,6.4vh)]" style={{ marginTop: HANG }} lang="hi">
               {w.hindi}
             </span>
             <span
               className={`mt-[0.2vh] text-center transition-opacity duration-200 ${open === w.id ? 'opacity-100' : 'opacity-0'}`}
               aria-hidden={open !== w.id}
             >
-              <span className="block text-[min(1vw,1.8vh)] font-bold text-saffron-deep">بالأردية</span>
-              <span className="font-urdu block text-[min(2.2vw,4vh)] leading-[1.9] text-ink" lang="ur">
+              <span className="block text-[0.7rem] font-bold text-saffron-deep lg:text-[min(1vw,1.8vh)]">بالأردية</span>
+              <span className="font-urdu block text-base leading-[1.9] text-ink lg:text-[min(2.2vw,4vh)]" lang="ur">
                 {w.urdu}
               </span>
             </span>

@@ -18,8 +18,9 @@ export default function NamePage() {
   const doneCount = useRef(0)
   const inputRef = useRef(null)
 
+  // laptop: ready to type; phones: don't pop the keyboard up before the visitor taps the box
   useEffect(() => {
-    inputRef.current?.focus()
+    if (window.innerWidth >= 1024) inputRef.current?.focus()
   }, [])
 
   // Stop the writing animation if the name changes
@@ -35,7 +36,7 @@ export default function NamePage() {
   }, [])
 
   return (
-    <div className="mx-auto flex h-full max-w-[1800px] flex-col px-10 pt-6 pb-6">
+    <div className="mx-auto flex max-w-[1800px] flex-col px-4 pt-4 pb-6 lg:h-full lg:px-10 lg:pt-6">
       {/* Input */}
       <div className="flex flex-col items-center">
         <div className="relative w-full max-w-4xl">
@@ -48,14 +49,14 @@ export default function NamePage() {
             spellCheck={false}
             autoComplete="off"
             placeholder="اكتب اسمك (بالعربية أو الإنجليزية)"
-            className="h-24 w-full rounded-full bg-paper px-16 text-center font-display text-5xl font-bold text-ink shadow-[0_12px_40px_-12px_rgba(0,0,128,0.22)] ring-2 ring-navy/10 transition outline-none placeholder:text-4xl placeholder:font-semibold placeholder:text-ink/25 focus:ring-4 focus:ring-saffron/60"
+            className="h-16 w-full rounded-full bg-paper px-12 text-center font-display text-3xl font-bold text-ink shadow-[0_12px_40px_-12px_rgba(0,0,128,0.22)] ring-2 ring-navy/10 transition outline-none placeholder:text-lg placeholder:font-semibold placeholder:text-ink/25 focus:ring-4 focus:ring-saffron/60 lg:h-24 lg:px-16 lg:text-5xl lg:placeholder:text-4xl"
           />
-          <Sparkles className="pointer-events-none absolute start-8 top-1/2 -translate-y-1/2 text-saffron" size={30} />
+          <Sparkles className="pointer-events-none absolute start-5 top-1/2 h-6 w-6 -translate-y-1/2 text-saffron lg:start-8 lg:h-[30px] lg:w-[30px]" />
         </div>
 
-        <div className="mt-3 flex h-10 items-center gap-3 text-xl">
+        <div className="mt-3 flex min-h-10 flex-wrap items-center justify-center gap-3 text-base lg:h-10 lg:text-xl">
           {result ? (
-            <motion.div key={result.input} className="flex items-center gap-3" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
+            <motion.div key={result.input} className="flex flex-wrap items-center justify-center gap-2 lg:gap-3" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
               <span className="text-muted">يُلفظ:</span>
               <span className="rounded-full bg-navy/5 px-4 py-1 font-bold text-navy" dir="ltr">
                 {result.pronunciation}
@@ -71,7 +72,7 @@ export default function NamePage() {
               {result.funNote && <span className="rounded-full bg-green-soft px-3 py-1 text-base font-semibold text-green">{result.funNote}</span>}
             </motion.div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <span className="text-muted">جرّب:</span>
               {EXAMPLES.map((ex) => (
                 <button
@@ -88,13 +89,13 @@ export default function NamePage() {
       </div>
 
       {/* Cards */}
-      <div className="mt-5 grid min-h-0 flex-1 grid-cols-5 gap-4">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:grid-cols-5 lg:gap-4">
         {NAME_SCRIPTS.map((s, i) => (
           <motion.button
             key={s.key}
             disabled={!result}
             onClick={() => setBreakdown(s)}
-            className="group relative flex min-h-0 flex-col overflow-hidden rounded-[2rem] bg-paper text-start shadow-sm ring-1 ring-ink/5 transition enabled:hover:-translate-y-1 enabled:hover:shadow-xl disabled:cursor-default"
+            className="group relative flex min-h-[12rem] flex-col overflow-hidden rounded-[2rem] bg-paper text-start shadow-sm ring-1 ring-ink/5 transition enabled:hover:-translate-y-1 enabled:hover:shadow-xl disabled:cursor-default lg:min-h-0"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.08, type: 'spring', stiffness: 160, damping: 20 }}
@@ -145,7 +146,7 @@ export default function NamePage() {
       </div>
 
       {/* Actions */}
-      <div className="mt-5 flex justify-center gap-5">
+      <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row lg:gap-5">
         <ActionButton disabled={!result || writeRun > 0} onClick={startWriting} className="bg-saffron text-ink">
           <PenLine size={30} /> {writeRun ? 'جارٍ الكتابة…' : 'شاهده وهو يُكتب'}
         </ActionButton>
@@ -168,7 +169,7 @@ function ActionButton({ children, className, ...props }) {
   return (
     <motion.button
       whileTap={{ scale: 0.95 }}
-      className={`flex h-20 items-center gap-3 rounded-full px-10 font-display text-3xl font-extrabold shadow-lg transition hover:brightness-110 disabled:opacity-35 disabled:shadow-none ${className}`}
+      className={`flex h-16 items-center justify-center gap-3 rounded-full px-6 font-display text-2xl font-extrabold shadow-lg transition hover:brightness-110 disabled:opacity-35 disabled:shadow-none lg:h-20 lg:px-10 lg:text-3xl ${className}`}
       {...props}
     >
       {children}

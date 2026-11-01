@@ -94,6 +94,12 @@ Vite on `http://localhost:5173`. Without Supabase keys in `.env.local` the realt
 Debug helpers in development builds: `window.__footballHost` (room, slots, held buttons) and `window.__football`
 (the Phaser scene) in the console; `?debug` on `/football` or `/controller` shows the Realtime overlay.
 
+### On phones
+
+The whole site also works on a phone (for visitors who open htuindia.lol themselves): below laptop width every page is
+one scrolling column, and the top bar becomes a **☰ menu** with all the pages. The laptop layout is unchanged. On a phone
+the tours are driven by touch (drag to look around, tap the arrows to walk), and the piano page offers "العب الآن".
+
 ---
 
 ## 4. Virtual tours (`/tour`)
@@ -190,7 +196,7 @@ Debug helper: add `?timer=1` to the `/tour` URL to keep the tour running in a ba
 A piano-tiles game that visitors play **on their own phones**, as many at once as you like. The laptop only shows a QR code; the game and its music run on each phone (sound comes from the phone's speaker, never the laptop).
 
 ```
- Laptop:  https://htuindia.lol/tiles-qr   (only the big QR code; Esc goes back to the site)
+ Laptop:  https://htuindia.lol/tiles-qr   (top bar: بيانو; a big QR code. On a phone this page shows an "العب الآن" button instead)
  Phones:  https://htuindia.lol/tiles      (what the QR code opens)
 ```
 

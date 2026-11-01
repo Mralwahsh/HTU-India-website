@@ -30,14 +30,16 @@ const IS_PHONE = typeof window !== 'undefined' && window.matchMedia?.('(pointer:
 
 // Pages driven by a phone: no attract mode, and Reset stays on the page (back to its start screen).
 const PHONE_PAGES = ['/football', '/tour']
+// Pages that must stay visible at the booth (no attract mode): the phone pages + the piano QR code.
+const NO_ATTRACT = [...PHONE_PAGES, '/tiles-qr']
 
 function Shell() {
   const location = useLocation()
   const navigate = useNavigate()
   const { reset, resetKey } = useVisitor()
   // During a match or tour the laptop gets no mouse/keyboard input (visitors use phones): no attract mode there.
-  const onPhonePage = PHONE_PAGES.includes(location.pathname)
-  const idle = useIdle(BOOTH.idleSeconds, !onPhonePage && !IS_PHONE)
+  const noAttract = NO_ATTRACT.includes(location.pathname)
+  const idle = useIdle(BOOTH.idleSeconds, !noAttract && !IS_PHONE)
 
   // Reset = new visitor. On the football page it ends the match and goes back to its lobby;
   // on the tour page it leaves the 360° view and goes back to the map of places.
@@ -69,7 +71,8 @@ function Shell() {
         <AnimatePresence mode="wait">
           <motion.div
             key={`${location.pathname}#${resetKey}`}
-            className="absolute inset-0"
+            // laptop (lg+): every page fits the screen; phones and tablets: the page scrolls
+            className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain lg:overflow-visible"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
@@ -105,6 +108,14 @@ function Shell() {
                     </Suspense>
                   }
                 />
+                <Route
+                  path="/tiles-qr"
+                  element={
+                    <Suspense fallback={null}>
+                      <TilesQrPage />
+                    </Suspense>
+                  }
+                />
                 <Route path="*" element={<HomePage />} />
               </Routes>
             </ErrorBoundary>
@@ -126,14 +137,6 @@ export default function App() {
           element={
             <Suspense fallback={null}>
               <ControllerPage />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/tiles-qr"
-          element={
-            <Suspense fallback={null}>
-              <TilesQrPage />
             </Suspense>
           }
         />

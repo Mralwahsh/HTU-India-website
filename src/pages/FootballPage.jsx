@@ -219,7 +219,8 @@ export default function FootballPage() {
   }, [showPing])
 
   return (
-    <div className="relative h-full">
+    // phones: the lobby scrolls; the match always fills the screen
+    <div className={`relative ${phase === 'lobby' || !match ? 'min-h-full lg:h-full' : 'h-full'}`}>
       {phase === 'lobby' || !match ? (
         <FootballLobby
           controllerUrl={controllerUrl}
@@ -252,18 +253,18 @@ export default function FootballPage() {
                 {resumeIn}
               </motion.p>
             ) : (
-              <div className="flex items-center gap-10">
+              <div className="flex flex-col items-center gap-6 px-4 text-center lg:flex-row lg:gap-10 lg:text-start">
                 <div className="max-w-xl">
                   {pausedSlot === 'net' ? (
                     <>
-                      <p className="font-display text-5xl leading-snug font-extrabold text-white">انقطع اتصال الحاسوب بالإنترنت</p>
-                      <p className="mt-3 text-3xl text-white/80">جارٍ إعادة الاتصال… ستُستأنف المباراة تلقائيًا</p>
+                      <p className="font-display text-3xl leading-snug font-extrabold text-white lg:text-5xl">انقطع اتصال الحاسوب بالإنترنت</p>
+                      <p className="mt-3 text-xl text-white/80 lg:text-3xl">جارٍ إعادة الاتصال… ستُستأنف المباراة تلقائيًا</p>
                     </>
                   ) : (
                     <>
-                      <p className="font-display text-5xl leading-snug font-extrabold text-white">انقطع اتصال {SLOT_LABEL_AR[pausedSlot] ?? 'اللاعب'}</p>
-                      <p className="mt-3 text-3xl text-white/80">امسح الرمز مجددًا للعودة إلى المباراة</p>
-                      <p className="mt-2 text-2xl text-white/70">
+                      <p className="font-display text-3xl leading-snug font-extrabold text-white lg:text-5xl">انقطع اتصال {SLOT_LABEL_AR[pausedSlot] ?? 'اللاعب'}</p>
+                      <p className="mt-3 text-xl text-white/80 lg:text-3xl">امسح الرمز مجددًا للعودة إلى المباراة</p>
+                      <p className="mt-2 text-lg text-white/70 lg:text-2xl">
                         رمز الغرفة:{' '}
                         <bdi className="font-mono font-bold text-white" dir="ltr">
                           {prettyRoomCode(net.code)}
@@ -275,7 +276,7 @@ export default function FootballPage() {
                     إنهاء المباراة
                   </button>
                 </div>
-                {pausedSlot !== 'net' && controllerUrl && <QrCode text={controllerUrl} size={260} />}
+                {pausedSlot !== 'net' && controllerUrl && <QrCode text={controllerUrl} size={window.innerWidth >= 1024 ? 260 : 180} />}
               </div>
             )}
           </Overlay>
@@ -308,28 +309,28 @@ function ResultCard({ result, characters, secondsLeft, ready }) {
           <motion.img
             src={headDataUrl(winner)}
             alt=""
-            className={`h-64 w-64 drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)] ${result.winner === 'p2' ? '-scale-x-100' : ''}`}
+            className={`h-40 w-40 drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)] lg:h-64 lg:w-64 ${result.winner === 'p2' ? '-scale-x-100' : ''}`}
             animate={{ y: [0, -24, 0], rotate: [0, -4, 4, 0] }}
             transition={{ duration: 1, repeat: Infinity }}
           />
-          <p className="mt-2 text-3xl font-bold text-saffron">{SLOT_LABEL_AR[result.winner]} يفوز!</p>
-          <p className="font-display text-8xl leading-tight font-extrabold">{winner.nameAr}</p>
+          <p className="mt-2 text-xl font-bold text-saffron lg:text-3xl">{SLOT_LABEL_AR[result.winner]} يفوز!</p>
+          <p className="font-display text-5xl leading-tight font-extrabold lg:text-8xl">{winner.nameAr}</p>
         </>
       ) : (
-        <p className="font-display text-8xl font-extrabold">تعادل!</p>
+        <p className="font-display text-5xl font-extrabold lg:text-8xl">تعادل!</p>
       )}
-      <p className="mt-1 font-display text-5xl font-bold" dir="ltr">
+      <p className="mt-1 font-display text-3xl font-bold lg:text-5xl" dir="ltr">
         {result.score.p1} – {result.score.p2}
       </p>
       {result.broken?.includes('biggestWin') && <p className="mt-3 rounded-full bg-[#ffd23f] px-5 py-1 text-2xl font-extrabold text-navy">🏆 أكبر فوز اليوم!</p>}
       <motion.p
-        className="mt-6 rounded-full bg-saffron px-8 py-3 font-display text-3xl font-extrabold text-navy"
+        className="mt-6 rounded-full bg-saffron px-6 py-3 font-display text-xl font-extrabold text-navy lg:px-8 lg:text-3xl"
         animate={{ scale: [1, 1.05, 1] }}
         transition={{ duration: 1.2, repeat: Infinity }}
       >
         {ready ? 'اضغط «ركل» للعب مجددًا' : 'بانتظار لاعب ثانٍ للعب مجددًا…'}
       </motion.p>
-      <p className="mt-4 text-xl text-white/70">العودة إلى صفحة الانتظار بعد {Math.max(0, secondsLeft)} ثانية</p>
+      <p className="mt-4 px-4 text-base text-white/70 lg:text-xl">العودة إلى صفحة الانتظار بعد {Math.max(0, secondsLeft)} ثانية</p>
     </motion.div>
   )
 }

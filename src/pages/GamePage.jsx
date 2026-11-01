@@ -113,22 +113,22 @@ export default function GamePage() {
   if (!data) return null
 
   return (
-    <div className="mx-auto flex h-full max-w-[1600px] flex-col px-12 py-6">
+    <div className="mx-auto flex min-h-full max-w-[1600px] flex-col px-4 py-4 lg:h-full lg:px-12 lg:py-6">
       <AnimatePresence mode="wait">
         {phase === 'intro' && <Intro key="intro" onStart={start} highScore={highScore} data={data} />}
         {phase === 'play' && round && (
           <motion.div key="play" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             {/* status bar */}
-            <div className="flex items-center gap-6">
-              <div className="flex gap-2">
+            <div className="flex items-center gap-3 lg:gap-6">
+              <div className="flex gap-1 lg:gap-2">
                 {rounds.map((_, i) => (
                   <span
                     key={i}
-                    className={`h-4 w-12 rounded-full transition-colors ${i < roundIdx ? 'bg-navy' : i === roundIdx ? 'bg-saffron' : 'bg-ink/10'}`}
+                    className={`h-3 w-5 rounded-full transition-colors lg:h-4 lg:w-12 ${i < roundIdx ? 'bg-navy' : i === roundIdx ? 'bg-saffron' : 'bg-ink/10'}`}
                   />
                 ))}
               </div>
-              <div className="h-4 flex-1 overflow-hidden rounded-full bg-ink/10">
+              <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink/10 lg:h-4">
                 <motion.div
                   key={`timer-${roundIdx}`}
                   className="h-full rounded-full bg-gradient-to-r from-green via-saffron to-accent"
@@ -137,7 +137,7 @@ export default function GamePage() {
                   transition={{ duration: seconds, ease: 'linear' }}
                 />
               </div>
-              <motion.span key={score} className="min-w-36 text-end font-display text-4xl font-extrabold text-navy" initial={{ scale: 1.3 }} animate={{ scale: 1 }}>
+              <motion.span key={score} className="text-end font-display text-2xl font-extrabold whitespace-nowrap text-navy lg:min-w-36 lg:text-4xl" initial={{ scale: 1.3 }} animate={{ scale: 1 }}>
                 {score} نقطة
               </motion.span>
             </div>
@@ -152,16 +152,16 @@ export default function GamePage() {
                 exit={{ opacity: 0, x: -60 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="mt-5 text-center">
-                  <p className="text-2xl text-muted">
+                <div className="mt-4 text-center lg:mt-5">
+                  <p className="text-lg text-muted lg:text-2xl">
                     الكلمات الأربع تعني <b className="text-ink">«{round.word.arabic}»</b>
                   </p>
-                  <h2 className="mt-1 font-display text-6xl leading-snug font-extrabold">
+                  <h2 className="mt-1 font-display text-3xl leading-snug font-extrabold lg:text-6xl">
                     أيُّها مكتوبة ب<span className="text-saffron-deep">{round.target.nameAr}</span>؟
                   </h2>
                 </div>
 
-                <div className="mt-6 grid min-h-0 flex-1 grid-cols-2 gap-5">
+                <div className="mt-4 grid min-h-0 flex-1 grid-cols-2 gap-3 lg:mt-6 lg:gap-5">
                   {round.options.map((opt, i) => {
                     const revealed = !!answer
                     const isTarget = opt.id === round.target.id
@@ -172,7 +172,7 @@ export default function GamePage() {
                         key={opt.id}
                         onClick={() => choose(opt)}
                         disabled={revealed}
-                        className={`relative flex min-h-0 flex-col items-center justify-center rounded-[2rem] ring-4 transition-colors ${
+                        className={`relative flex min-h-[8.5rem] flex-col items-center justify-center rounded-[1.5rem] ring-4 transition-colors lg:min-h-0 lg:rounded-[2rem] ${
                           state === 'right'
                             ? 'bg-green text-white ring-green'
                             : state === 'wrong'
@@ -186,16 +186,16 @@ export default function GamePage() {
                         transition={{ delay: revealed ? 0 : i * 0.05, duration: state === 'wrong' ? 0.45 : 0.25 }}
                         whileTap={!revealed ? { scale: 0.96 } : undefined}
                       >
-                        <span className="absolute start-5 top-3 font-display text-xl font-bold opacity-40">{i + 1}</span>
-                        <div className="w-full px-6">
-                          <FitText dir={scriptDir(opt.script)} className={`${scriptFont(opt.script)} text-7xl leading-[1.5] font-bold 2xl:text-8xl`}>
+                        <span className="absolute start-3 top-2 font-display text-base font-bold opacity-40 lg:start-5 lg:top-3 lg:text-xl">{i + 1}</span>
+                        <div className="w-full px-3 lg:px-6">
+                          <FitText dir={scriptDir(opt.script)} className={`${scriptFont(opt.script)} text-5xl leading-[1.5] font-bold lg:text-7xl 2xl:text-8xl`}>
                             {round.word.translations[opt.id]}
                           </FitText>
                         </div>
                         <AnimatePresence>
                           {revealed && (
                             <motion.span
-                              className="flex items-center gap-2 text-2xl font-bold"
+                              className="flex items-center gap-1 text-base font-bold lg:gap-2 lg:text-2xl"
                               initial={{ opacity: 0, y: 8 }}
                               animate={{ opacity: 1, y: 0 }}
                             >
@@ -207,7 +207,7 @@ export default function GamePage() {
                         </AnimatePresence>
                         {state === 'right' && answer?.correct && (
                           <motion.span
-                            className="absolute end-6 top-4 font-display text-4xl font-extrabold"
+                            className="absolute end-3 top-2 font-display text-2xl font-extrabold lg:end-6 lg:top-4 lg:text-4xl"
                             initial={{ opacity: 0, y: 10, scale: 0.5 }}
                             animate={{ opacity: 1, y: -10, scale: 1 }}
                           >
@@ -218,7 +218,7 @@ export default function GamePage() {
                     )
                   })}
                 </div>
-                <div className="mt-3 h-10 text-center text-2xl font-bold">
+                <div className="mt-3 h-10 text-center text-lg font-bold lg:text-2xl">
                   {answer?.timedOut && <span className="text-accent">⏰ انتهى الوقت!</span>}
                 </div>
               </motion.div>
@@ -242,11 +242,11 @@ function Intro({ onStart, highScore, data }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
     >
-      <div className="mb-6 flex flex-wrap justify-center gap-4">
+      <div className="mb-6 flex flex-wrap justify-center gap-2 lg:gap-4">
         {data.languages.slice(0, 6).map((l, i) => (
           <motion.span
             key={l.id}
-            className={`${scriptFont(l.script)} rounded-3xl bg-paper px-6 text-5xl leading-[1.6] font-bold text-navy shadow-sm`}
+            className={`${scriptFont(l.script)} rounded-3xl bg-paper px-4 text-3xl leading-[1.6] font-bold text-navy shadow-sm lg:px-6 lg:text-5xl`}
             initial={{ opacity: 0, y: 30, rotate: -6 }}
             animate={{ opacity: 1, y: [0, -8, 0], rotate: 0 }}
             transition={{ delay: i * 0.08, y: { duration: 2.4, repeat: Infinity, delay: i * 0.3 } }}
@@ -255,20 +255,20 @@ function Intro({ onStart, highScore, data }) {
           </motion.span>
         ))}
       </div>
-      <h1 className="font-display text-7xl leading-snug font-extrabold">خمّن الخط!</h1>
-      <p className="mt-2 text-3xl text-ink/70">
+      <h1 className="font-display text-5xl leading-snug font-extrabold lg:text-7xl">خمّن الخط!</h1>
+      <p className="mt-2 text-xl text-ink/70 lg:text-3xl">
         نفس الكلمة بأربعة خطوط مختلفة. اختر الصحيح <b>بسرعة!</b>
       </p>
       <motion.button
         onClick={onStart}
         whileTap={{ scale: 0.95 }}
-        className="mt-8 flex h-24 items-center gap-4 rounded-full bg-gradient-to-l from-saffron to-saffron-deep px-14 font-display text-4xl font-extrabold text-white shadow-[0_20px_50px_-15px_rgba(226,112,10,0.6)] hover:brightness-110"
+        className="mt-8 flex h-16 items-center gap-4 rounded-full bg-gradient-to-l from-saffron to-saffron-deep px-10 font-display text-3xl font-extrabold text-white shadow-[0_20px_50px_-15px_rgba(226,112,10,0.6)] hover:brightness-110 lg:h-24 lg:px-14 lg:text-4xl"
         animate={{ scale: [1, 1.04, 1] }}
         transition={{ duration: 1.6, repeat: Infinity }}
       >
         <Play size={40} fill="currentColor" className="-scale-x-100" /> ابدأ
       </motion.button>
-      <p className="mt-6 flex items-center gap-2 text-2xl text-muted">
+      <p className="mt-6 flex items-center gap-2 text-lg text-muted lg:text-2xl">
         <Trophy className="text-saffron" /> أعلى نتيجة اليوم: <b className="text-ink">{highScore} نقطة</b>
       </p>
     </motion.div>
@@ -285,36 +285,36 @@ function End({ score, correct, total, highScore, newRecord, onAgain }) {
       exit={{ opacity: 0 }}
     >
       {newRecord && <Confetti />}
-      <p className="text-3xl font-semibold text-muted">{message}</p>
+      <p className="text-xl font-semibold text-muted lg:text-3xl">{message}</p>
       <motion.p
-        className="font-display text-[10rem] leading-none font-extrabold text-navy"
+        className="font-display text-[6rem] leading-none font-extrabold text-navy lg:text-[10rem]"
         initial={{ scale: 0.5 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 180, damping: 12 }}
       >
         {score}
-        <span className="text-5xl"> نقطة</span>
+        <span className="text-3xl lg:text-5xl"> نقطة</span>
       </motion.p>
-      <p className="mt-2 text-3xl font-bold">
+      <p className="mt-2 text-xl font-bold lg:text-3xl">
         صحيحة: {correct} من {total}
       </p>
       {newRecord ? (
         <motion.p
-          className="mt-4 rounded-full bg-saffron px-6 py-2 text-3xl font-extrabold text-ink"
+          className="mt-4 rounded-full bg-saffron px-6 py-2 text-xl font-extrabold text-ink lg:text-3xl"
           animate={{ scale: [1, 1.08, 1] }}
           transition={{ duration: 0.9, repeat: Infinity }}
         >
           🎉 أعلى نتيجة اليوم!
         </motion.p>
       ) : (
-        <p className="mt-4 flex items-center gap-2 text-2xl text-muted">
+        <p className="mt-4 flex items-center gap-2 text-lg text-muted lg:text-2xl">
           <Trophy className="text-saffron" /> أعلى نتيجة اليوم: <b className="text-ink">{highScore} نقطة</b>
         </p>
       )}
       <motion.button
         onClick={onAgain}
         whileTap={{ scale: 0.95 }}
-        className="mt-10 flex h-20 items-center gap-3 rounded-full bg-navy px-12 font-display text-3xl font-extrabold text-white shadow-lg hover:brightness-110"
+        className="mt-10 flex h-16 items-center gap-3 rounded-full bg-navy px-8 font-display text-2xl font-extrabold text-white shadow-lg hover:brightness-110 lg:h-20 lg:px-12 lg:text-3xl"
       >
         <RotateCcw size={32} /> العب مرة أخرى
       </motion.button>

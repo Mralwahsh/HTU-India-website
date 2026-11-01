@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Info } from 'lucide-react'
 import { KEYS } from '../tour/config.js'
 import { TOUR_PLACES, creditLine } from '../tour/places.js'
 import { TourHost } from '../tour/net/TourHost.js'
@@ -185,7 +185,7 @@ export default function TourPage() {
   // ------------------------------------------------------------ render
   const inTour = mode !== 'map'
   return (
-    <div className="relative h-full overflow-hidden">
+    <div className={`relative overflow-hidden ${inTour ? 'h-full' : 'min-h-full lg:h-full'}`}>
       {/* 360° viewer host (kept mounted so the provider can render into it) */}
       <div ref={hostRef} className={`absolute inset-0 bg-[#0b0f3a] ${inTour ? '' : 'invisible'}`} />
 
@@ -204,36 +204,50 @@ export default function TourPage() {
 
       {inTour && (
         <>
-          <div className="absolute start-6 top-5 flex flex-col items-start gap-3">
-            <div className="pointer-events-none rounded-3xl bg-navy/80 px-6 py-3 text-white shadow-lg backdrop-blur">
-              <p className="font-display text-4xl leading-tight font-extrabold">{place.nameAr}</p>
-              <p className="text-xl text-white/80">
+          <div className="absolute start-3 top-3 flex flex-col items-start gap-2 lg:start-6 lg:top-5 lg:gap-3">
+            <div className="pointer-events-none rounded-2xl bg-navy/80 px-4 py-2 text-white shadow-lg backdrop-blur lg:rounded-3xl lg:px-6 lg:py-3">
+              <p className="font-display text-2xl leading-tight font-extrabold lg:text-4xl">{place.nameAr}</p>
+              <p className="text-base text-white/80 lg:text-xl">
                 {place.cityAr}
                 {viewpoint ? ` · ${viewpoint}` : ''}
               </p>
             </div>
             {/* back to the map of places, without leaving the page (the phone stays connected) */}
             {mode === 'tour' && (
-              <button
-                type="button"
-                onClick={exitTour}
-                className="flex items-center gap-2 rounded-full bg-saffron px-5 py-2.5 text-xl font-extrabold text-navy shadow-lg transition-colors hover:bg-saffron-deep hover:text-white"
-                title="الخريطة (M)"
-              >
-                <ArrowRight size={24} strokeWidth={2.6} />
-                كل الأماكن
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={exitTour}
+                  className="flex items-center gap-2 rounded-full bg-saffron px-4 py-2 text-lg font-extrabold text-navy shadow-lg transition-colors hover:bg-saffron-deep hover:text-white lg:px-5 lg:py-2.5 lg:text-xl"
+                  title="الخريطة (M)"
+                >
+                  <ArrowRight size={22} strokeWidth={2.6} />
+                  كل الأماكن
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleInfo}
+                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-lg font-extrabold shadow-lg transition-colors lg:px-5 lg:py-2.5 lg:text-xl ${showInfo ? 'bg-navy text-white' : 'bg-paper/90 text-navy hover:bg-paper'}`}
+                  title="معلومات (I)"
+                  aria-pressed={showInfo}
+                >
+                  <Info size={22} strokeWidth={2.6} />
+                  معلومات
+                </button>
+              </div>
             )}
           </div>
-          <div className="pointer-events-none absolute end-6 top-5 flex items-center gap-2 rounded-full bg-black/45 px-4 py-2 text-lg font-bold text-white">
+          <div className="pointer-events-none absolute end-6 top-5 hidden items-center gap-2 rounded-full bg-black/45 px-4 py-2 text-lg font-bold text-white lg:flex">
             <span className={`h-3 w-3 rounded-full ${phone ? 'bg-[#2ecc40]' : 'bg-white/40'}`} />
             {phone ? 'الهاتف متصل' : 'لوحة المفاتيح'}
             {providerKind === 'google' && <span className="ms-2 rounded bg-white/20 px-2 text-sm">Street View</span>}
           </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-5 flex justify-center">
-            <p className="rounded-full bg-black/45 px-6 py-2 text-lg font-semibold text-white">
+          <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center px-3 lg:bottom-5">
+            <p className="hidden rounded-full bg-black/45 px-6 py-2 text-lg font-semibold text-white lg:block">
               🚶 العصا اليسرى: مشي · 👀 العصا اليمنى: نظر · ℹ️ معلومات · ⏭️ المكان التالي · 🗺️ الخريطة
             </p>
+            {/* phones and tablets: the 360° view itself is touch-driven */}
+            <p className="rounded-full bg-black/50 px-4 py-1.5 text-center text-base font-semibold text-white lg:hidden">👆 اسحب للنظر حولك · المس الأسهم للمشي</p>
           </div>
         </>
       )}
@@ -241,7 +255,7 @@ export default function TourPage() {
       <AnimatePresence>
         {mode === 'loading' && (
           <motion.div key="loading" className="absolute inset-0 grid place-items-center bg-[#0b0f3a]/70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <p className="font-display text-4xl font-extrabold text-white">جارٍ الانتقال إلى {place.nameAr}…</p>
+            <p className="px-4 text-center font-display text-2xl font-extrabold text-white lg:text-4xl">جارٍ الانتقال إلى {place.nameAr}…</p>
           </motion.div>
         )}
         {inTour && showInfo && <FactsCard key="facts" place={place} />}
@@ -253,7 +267,7 @@ export default function TourPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            <p className="rounded-full bg-black/60 px-6 py-3 text-2xl font-bold text-white">{toast.text}</p>
+            <p className="rounded-full bg-black/60 px-5 py-2 text-lg font-bold text-white lg:px-6 lg:py-3 lg:text-2xl">{toast.text}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -269,18 +283,19 @@ function MapScreen({ selected, setSelected, onEnter, controllerUrl, code, status
   // centre the preview on the start direction (matters for very wide strips like the Taj Mahal)
   const coverH = startNode?.fov?.h ?? 360
   const previewX = Math.min(100, Math.max(0, ((startNode?.startYaw ?? 0) / coverH + 0.5) * 100))
+  const qrSize = window.innerWidth >= 1024 ? 150 : 110
   return (
-    <div className="mx-auto grid h-full max-w-[1800px] grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] gap-6 px-8 py-5">
-      <section className="flex min-h-0 flex-col">
-        <h1 className="font-display text-5xl leading-tight font-extrabold text-navy">
+    <div className="mx-auto flex max-w-[1800px] flex-col gap-4 px-4 py-4 lg:grid lg:h-full lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-6 lg:px-8 lg:py-5">
+      <section className="flex min-h-0 flex-col max-lg:contents">
+        <h1 className="order-1 font-display text-4xl leading-tight font-extrabold text-navy lg:order-none lg:text-5xl">
           جولات <span className="text-saffron-deep">افتراضية</span> 🧭
         </h1>
-        <p className="text-2xl text-muted">تجوّل في أماكن من الهند بهاتفك، بزاوية 360°!</p>
+        <p className="order-1 -mt-3 text-lg text-muted lg:order-none lg:mt-0 lg:text-2xl">تجوّل في أماكن من الهند بهاتفك، بزاوية 360°!</p>
 
         <motion.button
           key={p.id}
           onClick={() => onEnter(selected)}
-          className="relative mt-4 min-h-0 flex-1 overflow-hidden rounded-[2rem] text-start shadow-lg"
+          className="relative order-2 h-80 shrink-0 overflow-hidden rounded-[2rem] text-start shadow-lg lg:order-none lg:mt-4 lg:h-auto lg:min-h-0 lg:flex-1"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -291,21 +306,24 @@ function MapScreen({ selected, setSelected, onEnter, controllerUrl, code, status
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-            <p className="text-xl font-bold text-saffron">{p.cityAr}</p>
-            <p className="font-display text-5xl leading-tight font-extrabold">{p.nameAr}</p>
-            <ul className="mt-2 space-y-1 text-lg leading-snug text-white/90">
+          <div className="absolute inset-x-0 bottom-0 p-4 text-white lg:p-6">
+            <p className="text-base font-bold text-saffron lg:text-xl">{p.cityAr}</p>
+            <p className="font-display text-3xl leading-tight font-extrabold lg:text-5xl">{p.nameAr}</p>
+            <ul className="mt-2 space-y-1 text-sm leading-snug text-white/90 lg:text-lg">
               {(showInfo ? p.facts : p.facts.slice(0, 2)).map((f) => (
                 <li key={f}>• {f.replace(/\s*TODO: verify.*$/i, '')}</li>
               ))}
             </ul>
-            <p className="mt-3 inline-block rounded-full bg-saffron px-5 py-1.5 text-xl font-extrabold text-navy">ادفع عصا المشي للأمام للدخول ▲</p>
+            <p className="mt-3 inline-block rounded-full bg-saffron px-4 py-1 text-base font-extrabold text-navy lg:px-5 lg:py-1.5 lg:text-xl">
+              <span className="lg:hidden">المس الصورة للدخول ▲</span>
+              <span className="hidden lg:inline">ادفع عصا المشي للأمام للدخول ▲</span>
+            </p>
           </div>
         </motion.button>
 
-        <div className="mt-4 flex items-center gap-5 rounded-3xl bg-paper p-4 shadow-sm ring-1 ring-ink/5">
+        <div className="order-4 flex items-center gap-4 rounded-3xl bg-paper p-4 shadow-sm ring-1 ring-ink/5 lg:order-none lg:mt-4 lg:gap-5">
           <div className="relative shrink-0">
-            {controllerUrl ? <QrCode text={controllerUrl} size={150} /> : <div className="h-[150px] w-[150px] animate-pulse rounded-2xl bg-ink/5" />}
+            {controllerUrl ? <QrCode text={controllerUrl} size={qrSize} /> : <div className="animate-pulse rounded-2xl bg-ink/5" style={{ width: qrSize, height: qrSize }} />}
             {status !== 'live' && (
               <div className="absolute inset-0 grid place-items-center rounded-2xl bg-paper/85 p-2 text-center">
                 <p className="text-base font-bold text-navy">{status === 'reconnecting' ? 'انقطع الاتصال… جارٍ إعادة الاتصال' : 'جارٍ الاتصال…'}</p>
@@ -313,23 +331,23 @@ function MapScreen({ selected, setSelected, onEnter, controllerUrl, code, status
             )}
           </div>
           <div className="min-w-0">
-            <p className="font-display text-2xl font-extrabold text-navy">امسح للتحكم بالجولة</p>
+            <p className="font-display text-xl font-extrabold text-navy lg:text-2xl">امسح للتحكم بالجولة</p>
             <p className="text-base font-bold text-ink/80">📱 {SCAN_HINT}</p>
             <p className="mt-1 text-lg">
               رمز الغرفة:{' '}
-              <bdi className="font-mono text-2xl font-extrabold tracking-[0.15em] text-saffron-deep" dir="ltr">
+              <bdi className="font-mono text-2xl font-extrabold tracking-[0.15em] whitespace-nowrap text-saffron-deep" dir="ltr">
                 {prettyRoomCode(code)}
               </bdi>
             </p>
             <p className={`text-lg font-bold ${phone ? 'text-green' : 'text-muted'}`}>{phone ? '✅ الهاتف متصل' : 'بانتظار هاتف…'}</p>
-            <p className="text-sm text-muted" dir="ltr">
+            <p className="hidden text-sm text-muted lg:block" dir="ltr">
               Keyboard: A/D choose · W enter · arrows look · +/− zoom · I info · N next · M map
             </p>
           </div>
         </div>
       </section>
 
-      <section className="min-h-0 rounded-[2.5rem] bg-paper p-4 shadow-sm ring-1 ring-ink/5">
+      <section className="order-3 h-[26rem] rounded-[2rem] bg-paper p-3 shadow-sm ring-1 ring-ink/5 lg:order-none lg:h-auto lg:min-h-0 lg:rounded-[2.5rem] lg:p-4">
         <TourMap places={TOUR_PLACES} selected={selected} onSelect={(i) => (i === selected ? onEnter(i) : setSelected(i))} />
       </section>
     </div>
@@ -339,14 +357,14 @@ function MapScreen({ selected, setSelected, onEnter, controllerUrl, code, status
 function FactsCard({ place }) {
   return (
     <motion.div
-      className="absolute end-6 top-28 w-[min(32rem,40vw)] rounded-[2rem] bg-paper/95 p-6 shadow-2xl backdrop-blur"
+      className="absolute inset-x-3 bottom-16 max-h-[60%] overflow-y-auto rounded-[1.5rem] bg-paper/95 p-4 shadow-2xl backdrop-blur lg:inset-x-auto lg:end-6 lg:top-28 lg:bottom-auto lg:max-h-none lg:w-[min(32rem,40vw)] lg:overflow-visible lg:rounded-[2rem] lg:p-6"
       initial={{ opacity: 0, x: -30 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -30 }}
     >
-      <p className="text-lg font-bold text-saffron-deep">{place.cityAr}</p>
-      <p className="font-display text-4xl leading-tight font-extrabold text-navy">{place.nameAr}</p>
-      <ul className="mt-3 space-y-2 text-xl leading-relaxed">
+      <p className="text-base font-bold text-saffron-deep lg:text-lg">{place.cityAr}</p>
+      <p className="font-display text-2xl leading-tight font-extrabold text-navy lg:text-4xl">{place.nameAr}</p>
+      <ul className="mt-3 space-y-2 text-base leading-relaxed lg:text-xl">
         {place.facts.map((f) => (
           <li key={f} className="flex gap-2">
             <span className="text-saffron">●</span>

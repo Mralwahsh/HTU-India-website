@@ -37,6 +37,12 @@ export default function MapPage() {
   const [legendFamily, setLegendFamily] = useState(null)
   const [mouse, setMouse] = useState({ x: 0, y: 0 })
   const wrapRef = useRef(null)
+  const panelRef = useRef(null)
+
+  // phones: the panel is under the map, so bring it into view when a state is tapped
+  useEffect(() => {
+    if (selected && window.innerWidth < 1024) panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [selected])
 
   useEffect(() => {
     getStates().then((ss) => setStates(Object.fromEntries(ss.map((s) => [s.id, s]))))
@@ -95,10 +101,10 @@ export default function MapPage() {
   )
 
   return (
-    <div className="mx-auto grid h-full max-w-[1800px] grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-8 px-10 py-5">
+    <div className="mx-auto flex max-w-[1800px] flex-col gap-5 px-4 py-4 lg:grid lg:h-full lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-8 lg:px-10 lg:py-5">
       {/* MAP */}
       <div className="flex min-h-0 flex-col">
-        <div ref={wrapRef} className="relative min-h-0 flex-1" onMouseMove={onMove}>
+        <div ref={wrapRef} className="relative aspect-[760/860] w-full lg:aspect-auto lg:min-h-0 lg:flex-1" onMouseMove={onMove}>
           {error ? (
             <MapMissing message={error} />
           ) : (
@@ -188,7 +194,7 @@ export default function MapPage() {
             {hoveredInfo && (
               <motion.div
                 key="tip"
-                className="pointer-events-none absolute z-10 w-80 rounded-3xl bg-paper p-5 shadow-2xl ring-1 ring-ink/10"
+                className="pointer-events-none absolute z-10 w-80 rounded-3xl bg-paper p-5 shadow-2xl ring-1 ring-ink/10 max-lg:hidden"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{
                   opacity: 1,
@@ -233,29 +239,29 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* PANEL */}
-      <div className="min-h-0">
+      {/* PANEL (phones: under the map) */}
+      <div ref={panelRef} className="min-h-0 scroll-mt-3">
         <AnimatePresence mode="wait">
           {selectedInfo ? (
             <StatePanel key={selected} {...selectedInfo} onClose={() => setSelected(null)} />
           ) : (
             <motion.div
               key="intro"
-              className="flex h-full flex-col justify-center rounded-[2.5rem] bg-paper p-8 shadow-sm ring-1 ring-ink/5 2xl:p-10"
+              className="flex flex-col justify-center rounded-[2rem] bg-paper p-5 shadow-sm ring-1 ring-ink/5 lg:h-full lg:rounded-[2.5rem] lg:p-8 2xl:p-10"
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 30 }}
             >
               <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-                <MousePointerClick size={64} className="text-saffron" />
+                <MousePointerClick size={64} className="h-12 w-12 text-saffron lg:h-16 lg:w-16" />
               </motion.div>
-              <h2 className="mt-4 font-display text-4xl leading-snug font-extrabold 2xl:text-5xl">اضغط على أي ولاية لترى اسمك بخطّها!</h2>
-              <p className="mt-4 text-2xl leading-relaxed text-ink/70">
+              <h2 className="mt-4 font-display text-[1.7rem] leading-snug font-extrabold lg:text-4xl 2xl:text-5xl">اضغط على أي ولاية لترى اسمك بخطّها!</h2>
+              <p className="mt-4 text-lg leading-relaxed text-ink/70 lg:text-2xl">
                 لغات الهند تنتمي إلى <b>4 عائلات مختلفة</b>، مختلفة عن بعضها كاختلاف العربية عن الإنجليزية.
               </p>
-              <ul className="mt-4 grid grid-cols-2 gap-2">
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
                 {Object.entries(families).map(([id, f]) => (
-                  <li key={id} className="flex items-start gap-2 text-lg leading-snug">
+                  <li key={id} className="flex items-start gap-2 text-base leading-snug lg:text-lg">
                     <span className="mt-1.5 h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: f.color }} />
                     <span>
                       <b>{f.nameAr}</b>: <span className="text-muted">{f.blurb}</span>

@@ -1,6 +1,7 @@
-import { NavLink } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Maximize, Minimize, RotateCcw } from 'lucide-react'
+import { useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Maximize, Menu, Minimize, RotateCcw, X } from 'lucide-react'
 import { useVisitor } from '../context/VisitorContext.jsx'
 import { useFullscreen } from '../hooks/useFullscreen.js'
 import Chakra from './Chakra.jsx'
@@ -13,12 +14,15 @@ const NAV = [
   { to: '/tour', label: 'جولات' },
   { to: '/football', label: 'كرة القدم' },
   { to: '/chess', label: 'شطرنج' },
-  { to: '/tiles-qr', label: 'بيانو' }, // Raga Tiles: the laptop shows only a QR code (Esc comes back)
+  { to: '/tiles-qr', label: 'بيانو' }, // Raga Tiles: the laptop shows a QR code, a phone gets a "play here" button
 ]
 
 export default function TopBar({ onReset }) {
   const { result } = useVisitor()
   const { isFullscreen, toggle } = useFullscreen()
+  const { pathname } = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const current = NAV.find((n) => n.to === pathname)?.label ?? 'القائمة'
 
   return (
     <header className="relative z-30 flex h-16 shrink-0 items-center gap-2 bg-paper/85 px-2 shadow-[0_1px_0_rgba(16,18,58,0.06)] backdrop-blur sm:h-20 sm:gap-4 sm:px-6 xl:gap-6 xl:px-8">
@@ -34,7 +38,8 @@ export default function TopBar({ onReset }) {
         </span>
       </NavLink>
 
-      <nav className="no-scrollbar mx-auto flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink/5 p-1.5">
+      {/* laptop: every page as a pill */}
+      <nav className="no-scrollbar mx-auto hidden min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink/5 p-1.5 lg:flex">
         {NAV.map((item) => (
           <NavLink key={item.to} to={item.to} end className="relative shrink-0 rounded-full px-3 py-1.5 text-base font-bold whitespace-nowrap sm:px-4 sm:py-2 sm:text-lg xl:px-6 xl:text-xl">
             {({ isActive }) => (
@@ -52,6 +57,18 @@ export default function TopBar({ onReset }) {
           </NavLink>
         ))}
       </nav>
+
+      {/* phones and tablets: the current page + a menu with all of them */}
+      <button
+        type="button"
+        onClick={() => setMenuOpen((v) => !v)}
+        className="mx-auto flex min-w-0 items-center gap-2 rounded-full bg-ink/5 px-4 py-2 text-lg font-bold text-navy lg:hidden"
+        aria-expanded={menuOpen}
+        aria-controls="site-menu"
+      >
+        {menuOpen ? <X size={22} /> : <Menu size={22} />}
+        <span className="truncate">{current}</span>
+      </button>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         {result && (
@@ -80,6 +97,45 @@ export default function TopBar({ onReset }) {
           <span className="hidden sm:inline">من جديد</span>
         </button>
       </div>
+
+      <AnimatePresence>
+        {menuOpen && (
+          <>
+            {/* tap outside to close */}
+            <motion.button
+              type="button"
+              aria-label="إغلاق القائمة"
+              className="fixed inset-0 top-16 z-0 bg-ink/30 sm:top-20 lg:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMenuOpen(false)}
+            />
+            <motion.nav
+              id="site-menu"
+              className="absolute inset-x-0 top-full z-10 grid grid-cols-2 gap-2 bg-paper p-3 shadow-xl lg:hidden"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+            >
+              {NAV.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end
+                  onClick={() => setMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `rounded-2xl px-4 py-3 text-center text-lg font-bold ${isActive ? 'bg-navy text-white' : 'bg-ink/5 text-ink active:bg-ink/10'}`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </motion.nav>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   )
 }

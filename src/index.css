@@ -50,8 +50,18 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  overflow: hidden; /* booth app: each page fits the screen */
+  overflow: hidden; /* booth app: each page fits the screen (on phones the page area scrolls instead, see App.jsx) */
   user-select: none;
+}
+
+/* the big rotating "hello" on the home page */
+:root {
+  --hello-size: min(15vw, 12vh);
+}
+@media (min-width: 1024px) {
+  :root {
+    --hello-size: min(9vw, 17vh);
+  }
 }
 
 input {
