@@ -19,6 +19,14 @@
   --color-accent: #e5560c; /* deep saffron: Reset, wrong answers */
   --color-accent-soft: #fde2d2;
 
+  /* the home page's misty forest */
+  --color-bark: #3d2b12; /* text, and the branch the Hindi words hang from */
+  --color-leaf: #2f4214;
+  --color-ember: #b5570b;
+  --color-parchment: #f7e9c4; /* the colour of the mist */
+  --color-moss: #2c3014; /* the dark forest floor */
+  --color-honey: #e9a23b;
+
   /* Headlines: Lalezar, a heavy poster face in the spirit of hand-painted signs (one weight only).
      Body: Latin from Bricolage, Arabic falls through to Noto Sans Arabic. */
   --font-display: "Lalezar", "IS Kufi", system-ui, sans-serif;
@@ -77,6 +85,55 @@ input {
 /* Nastaliq needs extra line height or its descenders get clipped */
 .font-urdu {
   line-height: 2.1;
+}
+
+/* home page: text standing in the forest's mist gets a halo of mist around it */
+.forest-glow {
+  text-shadow:
+    0 0 1.1em rgb(247 233 196 / 0.95),
+    0 0 0.35em rgb(247 233 196 / 0.9);
+}
+
+/* home page top bar: leaves hanging from its lower edge (a strip of the forest canopy) */
+.canopy-fringe {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='26' viewBox='0 0 240 26'%3E%3Crect width='240' height='1.5' fill='%232c3014'/%3E%3Cpath d='M0 0C-4.5 5.0 -2.7 11.5 0 14.4C2.7 11.5 4.5 5.0 0 0Z' fill='%2346521f' transform='translate%283.0 0.5%29 rotate%2821%29'/%3E%3Cpath d='M0 0C-2.6 2.6 -1.6 6.0 0 7.5C1.6 6.0 2.6 2.6 0 0Z' fill='%2346521f' transform='translate%2853.8 0.5%29 rotate%28-30%29'/%3E%3Cpath d='M0 0C-2.5 3.0 -1.5 6.8 0 8.6C1.5 6.8 2.5 3.0 0 0Z' fill='%2346521f' transform='translate%2870.5 0.5%29 rotate%2812%29'/%3E%3Cpath d='M0 0C-4.9 5.8 -2.9 13.2 0 16.5C2.9 13.2 4.9 5.8 0 0Z' fill='%2346521f' transform='translate%2877.8 0.5%29 rotate%2814%29'/%3E%3Cpath d='M0 0C-4.9 5.5 -2.9 12.5 0 15.6C2.9 12.5 4.9 5.5 0 0Z' fill='%2346521f' transform='translate%28102.8 0.5%29 rotate%28-26%29'/%3E%3Cpath d='M0 0C-6.3 7.7 -3.8 17.6 0 22.1C3.8 17.6 6.3 7.7 0 0Z' fill='%2346521f' transform='translate%28131.9 0.5%29 rotate%28-27%29'/%3E%3Cpath d='M0 0C-5.3 5.4 -3.2 12.4 0 15.4C3.2 12.4 5.3 5.4 0 0Z' fill='%2346521f' transform='translate%28139.5 0.5%29 rotate%286%29'/%3E%3Cpath d='M0 0C-5.6 5.9 -3.4 13.5 0 16.8C3.4 13.5 5.6 5.9 0 0Z' fill='%2346521f' transform='translate%28144.7 0.5%29 rotate%287%29'/%3E%3Cpath d='M0 0C-4.9 5.4 -2.9 12.4 0 15.5C2.9 12.4 4.9 5.4 0 0Z' fill='%2346521f' transform='translate%28150.2 0.5%29 rotate%28-26%29'/%3E%3Cpath d='M0 0C-3.8 3.9 -2.3 9.0 0 11.2C2.3 9.0 3.8 3.9 0 0Z' fill='%2346521f' transform='translate%28164.9 0.5%29 rotate%2828%29'/%3E%3Cpath d='M0 0C-3.2 3.5 -1.9 7.9 0 9.9C1.9 7.9 3.2 3.5 0 0Z' fill='%2346521f' transform='translate%28206.9 0.5%29 rotate%281%29'/%3E%3Cpath d='M0 0C-2.6 2.7 -1.6 6.1 0 7.7C1.6 6.1 2.6 2.7 0 0Z' fill='%2346521f' transform='translate%28230.6 0.5%29 rotate%2827%29'/%3E%3Cpath d='M0 0C-4.5 5.1 -2.7 11.7 0 14.7C2.7 11.7 4.5 5.1 0 0Z' fill='%232c3014' transform='translate%2812.6 0.5%29 rotate%28-25%29'/%3E%3Cpath d='M0 0C-7.7 8.0 -4.6 18.2 0 22.7C4.6 18.2 7.7 8.0 0 0Z' fill='%232c3014' transform='translate%2821.5 0.5%29 rotate%289%29'/%3E%3Cpath d='M0 0C-6.2 7.7 -3.7 17.6 0 22.0C3.7 17.6 6.2 7.7 0 0Z' fill='%232c3014' transform='translate%2831.3 0.5%29 rotate%28-2%29'/%3E%3Cpath d='M0 0C-5.4 6.6 -3.3 15.2 0 19.0C3.3 15.2 5.4 6.6 0 0Z' fill='%232c3014' transform='translate%2841.2 0.5%29 rotate%289%29'/%3E%3Cpath d='M0 0C-3.7 4.1 -2.2 9.3 0 11.7C2.2 9.3 3.7 4.1 0 0Z' fill='%232c3014' transform='translate%2849.1 0.5%29 rotate%28-28%29'/%3E%3Cpath d='M0 0C-3.0 3.3 -1.8 7.5 0 9.3C1.8 7.5 3.0 3.3 0 0Z' fill='%232c3014' transform='translate%2864.2 0.5%29 rotate%28-18%29'/%3E%3Cpath d='M0 0C-4.7 4.7 -2.8 10.8 0 13.5C2.8 10.8 4.7 4.7 0 0Z' fill='%232c3014' transform='translate%2886.3 0.5%29 rotate%2828%29'/%3E%3Cpath d='M0 0C-7.6 8.0 -4.6 18.4 0 23.0C4.6 18.4 7.6 8.0 0 0Z' fill='%232c3014' transform='translate%2897.3 0.5%29 rotate%28-24%29'/%3E%3Cpath d='M0 0C-2.5 2.5 -1.5 5.7 0 7.1C1.5 5.7 2.5 2.5 0 0Z' fill='%232c3014' transform='translate%28111.2 0.5%29 rotate%28-1%29'/%3E%3Cpath d='M0 0C-6.7 7.8 -4.0 17.8 0 22.3C4.0 17.8 6.7 7.8 0 0Z' fill='%232c3014' transform='translate%28121.3 0.5%29 rotate%28-19%29'/%3E%3Cpath d='M0 0C-4.2 4.1 -2.5 9.4 0 11.8C2.5 9.4 4.2 4.1 0 0Z' fill='%232c3014' transform='translate%28156.8 0.5%29 rotate%289%29'/%3E%3Cpath d='M0 0C-2.7 3.3 -1.6 7.5 0 9.4C1.6 7.5 2.7 3.3 0 0Z' fill='%232c3014' transform='translate%28173.3 0.5%29 rotate%283%29'/%3E%3Cpath d='M0 0C-4.7 5.3 -2.8 12.2 0 15.2C2.8 12.2 4.7 5.3 0 0Z' fill='%232c3014' transform='translate%28183.6 0.5%29 rotate%2811%29'/%3E%3Cpath d='M0 0C-6.2 7.7 -3.7 17.5 0 21.9C3.7 17.5 6.2 7.7 0 0Z' fill='%232c3014' transform='translate%28193.7 0.5%29 rotate%2810%29'/%3E%3Cpath d='M0 0C-4.0 4.0 -2.4 9.2 0 11.5C2.4 9.2 4.0 4.0 0 0Z' fill='%232c3014' transform='translate%28197.8 0.5%29 rotate%2814%29'/%3E%3Cpath d='M0 0C-5.3 5.6 -3.2 12.7 0 15.9C3.2 12.7 5.3 5.6 0 0Z' fill='%232c3014' transform='translate%28211.6 0.5%29 rotate%28-1%29'/%3E%3Cpath d='M0 0C-4.9 5.1 -2.9 11.7 0 14.7C2.9 11.7 4.9 5.1 0 0Z' fill='%232c3014' transform='translate%28218.1 0.5%29 rotate%28-3%29'/%3E%3Cpath d='M0 0C-3.6 3.6 -2.2 8.3 0 10.3C2.2 8.3 3.6 3.6 0 0Z' fill='%232c3014' transform='translate%28224.4 0.5%29 rotate%28-7%29'/%3E%3Cpath d='M0 0C-3.9 4.4 -2.4 10.1 0 12.7C2.4 10.1 3.9 4.4 0 0Z' fill='%232c3014' transform='translate%28235.8 0.5%29 rotate%281%29'/%3E%3C/svg%3E") repeat-x 0 0 / 240px 26px;
+}
+
+/* home page: leaves drifting down through the forest (FallingLeaves.jsx). Distances are in the leaf layer's
+   own size (it is a size container); --drift, --sway and --ax are set per leaf. */
+@keyframes leaf-fall {
+  from {
+    transform: translate3d(0, -8cqh, 0);
+  }
+  to {
+    transform: translate3d(var(--drift), 106cqh, 0);
+  }
+}
+@keyframes leaf-sway {
+  from {
+    transform: translateX(calc(var(--sway) * -1)) rotate(-24deg);
+  }
+  to {
+    transform: translateX(var(--sway)) rotate(24deg);
+  }
+}
+@keyframes leaf-tumble {
+  from {
+    transform: rotate3d(var(--ax), 1, 0.3, 0deg);
+  }
+  to {
+    transform: rotate3d(var(--ax), 1, 0.3, 360deg);
+  }
+}
+.leaf-fall {
+  animation: leaf-fall linear infinite;
+  will-change: transform;
+}
+.leaf-sway {
+  animation: leaf-sway ease-in-out infinite alternate;
+}
+.leaf-tumble {
+  animation: leaf-tumble linear infinite;
 }
 
 /* Subtle paper texture: two soft colour blooms */
