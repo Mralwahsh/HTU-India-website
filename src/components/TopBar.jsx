@@ -80,16 +80,20 @@ export default function TopBar({ onReset }) {
         <span className={`grid h-13 w-13 place-items-center rounded-full transition-colors duration-500 ${look.rings}`}>
           <Chakra size={42} spin duration={40} color={look.chakra} />
         </span>
-        <span className="hidden leading-tight lg:block">
-          <span className={`block font-display text-2xl font-extrabold ${look.title}`}>الهند تتحدّث</span>
-          <span className={`block font-deva text-sm font-semibold ${look.subtitle}`}>भारत बोलता है</span>
+        <span className="hidden text-right leading-tight lg:block">
+          <span className={`block font-display text-2xl ${look.title}`} dir="ltr">
+            HTU India
+          </span>
+          <span className={`block text-sm font-bold ${look.subtitle}`} dir="ltr">
+            International Week
+          </span>
         </span>
       </NavLink>
 
       {/* laptop: every page as a pill */}
       <nav className={`no-scrollbar mx-auto hidden min-w-0 items-center gap-1 overflow-x-auto rounded-full p-1.5 lg:flex ${look.soft}`}>
         {NAV.map((item) => (
-          <NavLink key={item.to} to={item.to} end className="relative shrink-0 rounded-full px-3 py-1.5 text-base font-bold whitespace-nowrap sm:px-4 sm:py-2 sm:text-lg xl:px-6 xl:text-xl">
+          <NavLink key={item.to} to={item.to} end className="relative shrink-0 rounded-full px-3 py-1.5 text-base font-bold whitespace-nowrap sm:px-4 sm:py-2 sm:text-lg 2xl:px-6 2xl:text-xl">
             {({ isActive }) => (
               <>
                 {isActive && (
