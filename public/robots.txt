@@ -1,0 +1,8 @@
+# India Speaks (https://www.htuindia.lol)
+User-agent: *
+# phone controllers and a team tool: not pages for search results
+Disallow: /controller
+Disallow: /tour-controller
+Disallow: /streetview-test
+
+Sitemap: https://www.htuindia.lol/sitemap.xml

@@ -122,3 +122,30 @@ npm start
 ```
 
 Then follow that folder's `BOOTH_SETUP.md`.
+
+## 6. Getting found on Google
+
+The site already gives search engines what they need. Each page has its own title, description and share
+preview (`src/config/seo.js`; the build writes `dist/<page>/index.html` for each page, plus
+`dist/sitemap.xml`). `public/robots.txt` keeps the phone controllers out of search results, and
+`public/og-image.jpg` is the picture shown when a link is shared on WhatsApp, Telegram or X. To change a
+page's title or description, edit `src/config/seo.js`.
+
+Google still has to be told the site exists. Do this once:
+
+1. Open <https://search.google.com/search-console> and sign in with a Google account.
+2. **Add property → Domain**, type `htuindia.lol`, and copy the `google-site-verification=...` TXT value.
+3. In Porkbun: **Domain Management → htuindia.lol → DNS**. Add a record with type `TXT`, host empty,
+   answer = the value you copied. Save it, wait a few minutes, then press **Verify** in Search Console.
+4. Search Console → **Sitemaps** → submit `https://www.htuindia.lol/sitemap.xml`.
+5. Search Console → **URL inspection** → `https://www.htuindia.lol/` → **Request indexing**.
+6. Optional: in Bing Webmaster Tools (<https://www.bing.com/webmasters>), choose **Import from Google
+   Search Console**. Bing also feeds DuckDuckGo and Yahoo.
+
+What to expect:
+
+- A new site shows up within a few days to about two weeks.
+- People will find it by searching its name, for example "htuindia" or "الهند تتحدث HTU".
+- Wide searches such as "لغات الهند" are dominated by big, older sites. Links to the site help most
+  (HTU's pages, Instagram posts and stories about International Week), and so does everyone visiting
+  it from the booth's QR codes.

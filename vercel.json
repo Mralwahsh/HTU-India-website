@@ -8,6 +8,8 @@
     { "source": "/tiles/", "destination": "/tiles.html" },
     { "source": "/chess/puzzles", "destination": "/chess-puzzles.html" },
     { "source": "/chess/puzzles/", "destination": "/chess-puzzles.html" },
+    { "source": "/:page(map|name|game|tour|football|chess|tiles-qr)", "destination": "/:page/index.html" },
+    { "source": "/:page(map|name|game|tour|football|chess|tiles-qr)/", "destination": "/:page/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

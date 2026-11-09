@@ -7,6 +7,7 @@ import { BOOTH } from './config/booth.js'
 import TopBar from './components/TopBar.jsx'
 import AttractMode from './components/AttractMode.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import SeoTags from './components/SeoTags.jsx'
 import HomePage from './pages/HomePage.jsx'
 import MapPage from './pages/MapPage.jsx'
 import NamePage from './pages/NamePage.jsx'
@@ -130,6 +131,7 @@ function Shell() {
 export default function App() {
   return (
     <BrowserRouter>
+      <SeoTags />
       <Routes>
         {/* phone controller: standalone page, none of the booth chrome */}
         <Route
