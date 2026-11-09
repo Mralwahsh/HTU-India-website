@@ -145,7 +145,8 @@ Google still has to be told the site exists. Do this once:
 What to expect:
 
 - A new site shows up within a few days to about two weeks.
-- People will find it by searching its name, for example "htuindia" or "الهند تتحدث HTU".
+- People will find it by searching its name, for example "HTU India", "International Week HTU India" or
+  "الهند الأسبوع الدولي HTU". The titles and descriptions are in English and Arabic for that reason.
 - Wide searches such as "لغات الهند" are dominated by big, older sites. Links to the site help most
   (HTU's pages, Instagram posts and stories about International Week), and so does everyone visiting
   it from the booth's QR codes.

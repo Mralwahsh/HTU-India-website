@@ -9,55 +9,68 @@
 // Plain JS on purpose (no JSX, no browser APIs): Node imports it too.
 
 export const SITE_URL = 'https://www.htuindia.lol' // the apex htuindia.lol redirects here
-export const SITE_NAME = 'الهند تتحدّث · India Speaks'
-export const SHARE_IMAGE = { path: '/og-image.jpg', width: 1200, height: 630, alt: 'الهند تتحدّث: ولد يجلس على حروف HTU الكبيرة في غابة هندية' }
+export const SITE_NAME = 'HTU India'
+export const SHARE_IMAGE = {
+  path: '/og-image.jpg',
+  width: 1200,
+  height: 630,
+  alt: 'HTU India, International Week: a boy sitting on giant HTU letters in an Indian forest · الهند في الأسبوع الدولي HTU',
+}
 
-const BRAND = 'الهند تتحدّث'
+// Every title and description is in English and Arabic, so the site is found either way
+// ("HTU India", "International Week HTU India", "الهند الأسبوع الدولي HTU").
+const BRAND = 'HTU India'
 
 /** Every page that should be found on Google, by path. `file`: built by its own HTML entry (not the main app). */
 export const PAGES = {
   '/': {
-    title: 'الهند تتحدّث · India Speaks | جناح الهند في الأسبوع الدولي HTU',
+    title: 'HTU India | International Week HTU · جناح الهند في الأسبوع الدولي',
     description:
-      'جناح الهند في الأسبوع الدولي بجامعة الحسين التقنية (HTU): لغات الهند وخطوطها، اكتب اسمك بالخطوط الهندية، جولات 360° في الهند، وألعاب تلعبها بهاتفك.',
+      'HTU India: the India booth website for International Week at Al Hussein Technical University (HTU). موقع جناح الهند في الأسبوع الدولي بجامعة الحسين التقنية: لغات الهند وخطوطها، اسمك بالخطوط الهندية، جولات 360° وألعاب بالهاتف.',
   },
   '/map': {
-    title: `خريطة لغات الهند | ${BRAND}`,
-    description: 'اضغط على أي ولاية هندية لتعرف لغتها وخطّها، وشاهد اسمك مكتوبًا به.',
+    title: `India Languages Map · خريطة لغات الهند | ${BRAND}`,
+    description:
+      'Tap any Indian state to see its language and script, and your name written in it. اضغط على أي ولاية هندية لتعرف لغتها وخطّها، وشاهد اسمك مكتوبًا به.',
   },
   '/name': {
-    title: `اكتب اسمك بالخطوط الهندية | ${BRAND}`,
-    description: 'اكتب اسمك بالعربية أو الإنجليزية وشاهده مكتوبًا بخمسة خطوط هندية، حرفًا حرفًا.',
+    title: `Your Name in Indian Scripts · اكتب اسمك بالخطوط الهندية | ${BRAND}`,
+    description:
+      'Type your name in Arabic or English and see it written in five Indian scripts, letter by letter. اكتب اسمك وشاهده مكتوبًا بخمسة خطوط هندية، حرفًا حرفًا.',
   },
   '/game': {
-    title: `خمّن الخط: لعبة الخطوط الهندية | ${BRAND}`,
-    description: 'لعبة سريعة من خمس جولات: كلمة مكتوبة بخط هندي، فهل تعرف أيّ خط هو؟',
+    title: `Guess the Script · خمّن الخط | ${BRAND}`,
+    description:
+      'A quick five-round game: a word written in an Indian script, can you tell which one? لعبة سريعة من خمس جولات: هل تعرف بأي خط هندي كُتبت الكلمة؟',
   },
   '/tour': {
-    title: `جولات 360° في الهند | ${BRAND}`,
-    description: 'تجوّل في أماكن من الهند بزاوية 360°، وتحكّم بالجولة من هاتفك.',
+    title: `360° Tours of India · جولات 360° في الهند | ${BRAND}`,
+    description: 'Walk around places in India in 360° and steer the tour from your phone. تجوّل في أماكن من الهند بزاوية 360°، وتحكّم بالجولة من هاتفك.',
   },
   '/football': {
-    title: `كرة القدم بهاتفك | ${BRAND}`,
-    description: 'مباراة كرة قدم للاعبَين على شاشة جناح الهند، يتحكّم كل لاعب بهاتفه.',
+    title: `Phone Football · كرة القدم بهاتفك | ${BRAND}`,
+    description:
+      'A two-player football match on the India booth screen, each player controls with their phone. مباراة كرة قدم للاعبَين على شاشة جناح الهند، يتحكّم كل لاعب بهاتفه.',
   },
   '/chess': {
-    title: `الشطرنج وُلد في الهند | ${BRAND}`,
-    description: 'من «تشاتورانغا» إلى الشطرنج: قصة اللعبة التي وُلدت في الهند قبل نحو 1500 سنة، وتحدٍّ لألغاز الشطرنج على هاتفك.',
+    title: `Chess Was Born in India · الشطرنج وُلد في الهند | ${BRAND}`,
+    description:
+      'From chaturanga to chess: the game born in India about 1500 years ago, and a chess puzzle challenge on your phone. من «تشاتورانغا» إلى الشطرنج، وتحدٍّ لألغاز الشطرنج على هاتفك.',
   },
   '/tiles-qr': {
-    title: `راغا تايلز: بيانو بألحان هندية | ${BRAND}`,
-    description: 'بيانو بألحان هندية على هاتفك: المس البلاطات في وقتها.',
+    title: `Raga Tiles: Indian Melodies Piano · راغا تايلز | ${BRAND}`,
+    description: 'A piano tiles game with Indian melodies, on your phone. بيانو بألحان هندية على هاتفك: المس البلاطات في وقتها.',
   },
   '/tiles': {
     file: 'tiles.html',
-    title: `راغا تايلز · Raga Tiles | ${BRAND}`,
-    description: 'بيانو بألحان هندية على هاتفك: المس البلاطات في وقتها.',
+    title: `Raga Tiles · راغا تايلز | ${BRAND}`,
+    description: 'A piano tiles game with Indian melodies, on your phone. بيانو بألحان هندية على هاتفك: المس البلاطات في وقتها.',
   },
   '/chess/puzzles': {
     file: 'chess-puzzles.html',
-    title: `تحدّي ألغاز الشطرنج ♟️ | ${BRAND}`,
-    description: 'تحدٍّ سريع لألغاز الشطرنج على هاتفك، من جناح الهند في الأسبوع الدولي بجامعة الحسين التقنية.',
+    title: `Chess Puzzle Challenge · تحدّي ألغاز الشطرنج | ${BRAND}`,
+    description:
+      'A quick chess puzzle challenge on your phone, from the India booth at HTU International Week. تحدٍّ سريع لألغاز الشطرنج على هاتفك، من جناح الهند في الأسبوع الدولي.',
   },
 }
 
@@ -88,6 +101,7 @@ export function seoHead(pathname) {
     '<meta property="og:type" content="website" />',
     `<meta property="og:site_name" content="${escape(SITE_NAME)}" />`,
     '<meta property="og:locale" content="ar_AR" />',
+    '<meta property="og:locale:alternate" content="en_US" />',
     `<meta property="og:title" content="${escape(p.title)}" />`,
     `<meta property="og:description" content="${escape(p.description)}" />`,
     `<meta property="og:url" content="${p.url}" />`,
@@ -103,7 +117,7 @@ export function seoHead(pathname) {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       name: SITE_NAME,
-      alternateName: ['India Speaks', 'الهند تتحدث', 'HTU India'],
+      alternateName: ['HTU India Website', 'International Week HTU India', 'HTU International Week India', 'الهند في الأسبوع الدولي HTU', 'جناح الهند HTU'],
       url: SITE_URL + '/',
       inLanguage: 'ar',
       description: p.description,
