@@ -4,8 +4,8 @@
 
 # HTU India · International Week
 
-**The India booth website for HTU International Week** (Al Hussein Technical University, Jordan).
-Live at **https://htuindia.lol**.
+**The website of the India booth at HTU International Week 2026** (Al Hussein Technical University, Jordan).
+The event is over; the site is still online at **https://htuindia.lol**.
 
 <p dir="rtl"><b>موقع جناح الهند في الأسبوع الدولي بجامعة الحسين التقنية: «بلدٌ واحد، وأصواتٌ كثيرة». اكتب اسمك وشاهده بخطوط هندية، استكشف خريطة اللغات، تجوّل في الهند بزاوية 360°، والعب بهاتفك!</b></p>
 
@@ -17,12 +17,23 @@ Live at **https://htuindia.lol**.
 ![Vercel](https://img.shields.io/badge/hosted_on-Vercel-3d2b12?logo=vercel&logoColor=f7e9c4)
 ![Supabase](https://img.shields.io/badge/realtime-Supabase-3d2b12?logo=supabase&logoColor=f7e9c4)
 ![Interface](https://img.shields.io/badge/UI-Arabic_(RTL)-e9a23b)
+![License: MIT](https://img.shields.io/badge/license-MIT-e9a23b)
 
 </div>
 
 ---
 
-## 🌿 The new home page
+## 💡 About
+
+**HTU International Week** is an event at Al Hussein Technical University in Jordan, with booths about different
+countries. Our booth was about India, and its theme was language: India has 22 official languages and more than a
+dozen scripts, and Arabic speakers already know many Hindi words without realising it.
+
+The booth had a laptop running this website and a guide next to it. Visitors typed their name
+and saw it written in Indian scripts, found languages on a map, played games with their own phones, and walked
+through 360° photos of India. Everything is in Arabic (right to left), with Indian scripts throughout.
+
+## 🌿 The home page
 
 The home page is a **misty Indian forest**. In the bottom-left corner a boy sits on giant mossy **HTU** letters,
 swinging his legs and looking up at a "hello" that changes language every few seconds. Leaves drift down through the
@@ -45,8 +56,8 @@ follows below it.
 
 ## ✨ What visitors can do
 
-A guide stands next to the laptop and walks each visitor through it in 1–2 minutes. Every screen gives them something
-to *do*, not text to read.
+At the booth, a guide walked each visitor through it in 1–2 minutes. Every screen gives visitors something to *do*,
+not text to read.
 
 | Page | What happens |
 | --- | --- |
@@ -62,15 +73,17 @@ to *do*, not text to read.
 
 Every page also works on phones: the page buttons fold into a **☰** menu and the pages scroll.
 
-## 🚀 Quick start
+## 🚀 Run it yourself
 
-You need [Node.js](https://nodejs.org/) 20.19 or newer (22 LTS recommended).
+You need [Node.js](https://nodejs.org/) 20.19 or newer (22 LTS recommended). Everything works without any keys except
+the games played with phones (football and the tour controller): those need a free
+[Supabase](https://supabase.com/) project for their realtime connection ([DEPLOY.md](DEPLOY.md), step 1).
 
 ```bash
 git clone https://github.com/Mralwahsh/HTU-India-website.git
 cd HTU-India-website
 npm install
-copy .env.example .env.local   # then fill in the Supabase keys (optional for a first look)
+cp .env.example .env.local     # Windows: copy .env.example .env.local, then fill in the Supabase keys
 npm run dev                    # http://localhost:5173
 ```
 
@@ -83,15 +96,17 @@ npm run dev                    # http://localhost:5173
 | `npm run song` | Turn a MIDI file into a Raga Tiles song. |
 | `npm run puzzles` | Check every chess puzzle (`puzzles:generate` and `puzzles:pgn` make new ones). |
 
-**Deploying?** [DEPLOY.md](DEPLOY.md): Supabase project, Vercel, environment variables, the `htuindia.lol` domain,
+**Hosting your own copy?** [DEPLOY.md](DEPLOY.md): Supabase project, Vercel, environment variables, a custom domain,
 and getting the site on Google.
-**At the booth?** [BOOTH_SETUP.md](BOOTH_SETUP.md): the morning checklist, each feature, troubleshooting.
+**Running it at an event?** [BOOTH_SETUP.md](BOOTH_SETUP.md): the morning checklist we used, each feature, troubleshooting.
 
 Fonts, map data and the HarfBuzz engine are all inside the project (no font or map services). Visitors' phones use
 their own mobile data; only the phone-controller games need a live connection (Supabase Realtime). The last
 fully-offline version (laptop server + Windows hotspot) is the git tag `local-hotspot-version`.
 
-## 🎪 At the booth
+## 🎪 Booth mode
+
+The site was built to run all day on one laptop in fullscreen, with a new visitor every few minutes.
 
 | Control | What it does |
 | --- | --- |
@@ -103,13 +118,6 @@ fully-offline version (laptop server + Windows hotspot) is the git tag `local-ho
 | Tours: **A D**, **W**, arrows, **+ −**, **I**, **N**, **M** | Choose a place, enter, look around, zoom, facts, next place, back to the map. |
 
 Timings are in [`src/config/booth.js`](src/config/booth.js).
-
-**Before the event**
-
-- [ ] Open https://htuindia.lol and click through every page
-- [ ] Follow the morning checklist in [BOOTH_SETUP.md](BOOTH_SETUP.md) and play one match with two phones on mobile data
-- [ ] Use Chrome or Edge, browser zoom 100 %, fullscreen on
-- [ ] Turn off sleep / screensaver and keep the charger connected
 
 ## 🛠️ Tech stack
 
@@ -237,7 +245,7 @@ Most texts shown to visitors are plain JSON in [`src/data/`](src/data). No code 
 | Tour places, facts, walking directions | [`src/tour/places.js`](src/tour/places.js) (photos in `public/tours/`) |
 | Tour controls feel (look speed, dead zone, walk interval) | [`src/tour/config.js`](src/tour/config.js) |
 
-## 🧭 Roadmap
+## 🧭 Ideas for later
 
 - **Chess leaderboard on Supabase:** today's top solvers still come from the old laptop server, so on Vercel the leaderboard shows "الخادم غير متصل" (server not connected).
 
@@ -247,10 +255,13 @@ The code is ready for AI spellings (**Supabase Edge Function + OpenRouter**):
 - Every `get…()` function in `dataService.js` returns the same shape as the JSON files, so they can read from Supabase tables instead.
 - 🔒 Secret API keys (OpenRouter, Supabase service role) stay in the Edge Function: never in the frontend. Only the public Supabase anon key and the referrer-restricted Maps key ship in the page.
 
-## ✅ To verify before the event
+## 🤝 Corrections welcome
+
+Names written by rules are approximate (they show an "≈" badge), and not every spelling, greeting or fact has been
+checked by a native speaker. If you speak one of these languages and spot a mistake, please open an issue.
 
 <details>
-<summary>Spellings and facts that need a check by native speakers (click to open)</summary>
+<summary>What still needs a check (click to open)</summary>
 
 **Names and words**
 - [ ] All 58 names in `names.json` (Hindi, Urdu, Tamil, Bengali + pronunciation)
@@ -284,8 +295,21 @@ The code is ready for AI spellings (**Supabase Edge Function + OpenRouter**):
 - **Chess pieces:** Colin M.L. Burnett (Cburnett), CC BY-SA 3.0, via Wikimedia Commons. **Rules:** [chess.js](https://github.com/jhlywa/chess.js) (BSD-2-Clause).
 - **360° viewer:** [Photo Sphere Viewer](https://photo-sphere-viewer.js.org/) (MIT).
 
+## 📄 License
+
+The code is under the [MIT License](LICENSE): use it, change it, build your own booth with it.
+
+The licence covers the code only. These files keep their own terms (see Credits above):
+
+- **360° photos** in `public/tours/`: CC BY 2.0 or CC BY-SA 4.0, by their photographers.
+- **Fonts** in `public/fonts/` and the font packages: SIL Open Font License.
+- **Chess pieces** ([`src/chess-shared/pieces.js`](src/chess-shared/pieces.js)): CC BY-SA 3.0, Cburnett.
+- **Map data** in `public/data/`: DataMeet (CC BY 2.5 India) and Natural Earth (public domain).
+- **The home page art** in `public/home/` (the forest picture and the boy animation) and `public/og-image.jpg`:
+  not covered by the MIT License.
+
 <div align="center">
 
-🌿 Made with 🧡🤍💚 by the India team · HTU International Week 🌿
+🌿 Made with 🧡🤍💚 by the India team · HTU International Week 2026 🌿
 
 </div>
